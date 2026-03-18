@@ -5,12 +5,12 @@ import { getTexts, LANGUAGE_OPTIONS } from '../services/i18n';
 import { COLORS } from '../constants/theme';
 
 const MODEL_OPTIONS = [
+  { id: 'gemini-3.1-flash-lite-preview', icon: '⚡' },
   { id: 'gemini-3.1-pro-preview',       icon: '🧠' },
   { id: 'gemini-3-flash-preview',        icon: '✨' },
   { id: 'gemini-2.5-flash',             icon: '🎯' },
-  { id: 'gemini-3.1-flash-lite-preview', icon: '⚡' },
-  { id: 'qwen-vl-max',                  icon: '🔮' },
-  { id: 'glm-4v-flash',                 icon: '🌟' },
+  // { id: 'qwen-vl-max',                  icon: '🔮' },
+  // { id: 'glm-4v-flash',                 icon: '🌟' },
 ];
 
 const STYLE_OPTIONS = [
