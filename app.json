@@ -18,6 +18,9 @@
       }
     },
     "scheme": "tarotai",
-    "plugins": ["expo-font"]
+    "plugins": ["expo-font"],
+    "web": {
+      "publicPath": "/TarotAI/"
+    }
   }
 }
