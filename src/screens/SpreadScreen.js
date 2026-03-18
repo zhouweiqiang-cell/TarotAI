@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, StyleSheet, SafeAreaView, Platform } from 'react-native';
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { getTexts } from '../services/i18n';
 import { getSettings } from '../services/settingsStorage';
 import { addReading } from '../services/historyStorage';
@@ -21,7 +21,7 @@ async function transcribeAudio(base64, mimeType) {
       ],
     }],
   };
-  const res = await fetch(`${WORKER_URL}?model=gemini-2.0-flash&stream=false`, {
+  const res = await fetch(`${WORKER_URL}?model=gemini-3.1-flash-lite-preview&stream=false`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -153,7 +153,9 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
       try {
         await recordingRef.current.stopAndUnloadAsync();
         const uri = recordingRef.current.getURI();
-        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        if (!uri) throw new Error('录音文件不存在');
+        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+        if (!base64 || base64.length < 100) throw new Error('录音数据为空');
         const text = await transcribeAudio(base64, 'audio/aac');
         if (text) setQuestion(text);
         else alert('识别失败，请重试');
