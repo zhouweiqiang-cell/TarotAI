@@ -391,7 +391,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
               <View style={styles.fiveCardRow}>
                 {renderCardSlot(0, 80, 125)}
               </View>
-              <View style={styles.fiveCardRow}>
+              <View style={styles.fiveCardRowWide}>
                 {renderCardSlot(1, 80, 125)}
                 {renderCardSlot(2, 80, 125)}
               </View>
@@ -546,6 +546,7 @@ const styles = StyleSheet.create({
   cardsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
   fiveCardLayout: { alignItems: 'center', gap: 8 },
   fiveCardRow: { flexDirection: 'row', justifyContent: 'center', gap: 16 },
+  fiveCardRowWide: { flexDirection: 'row', justifyContent: 'center', gap: 80 },
   celticContainer: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
   celticCross: { alignItems: 'center' },
   celticRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
