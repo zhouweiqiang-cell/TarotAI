@@ -1,5 +1,7 @@
-import { COLORS, SUIT_COLORS } from '../constants/theme';
+import { getColors, getSuitColors } from '../constants/theme';
 
-export function getSuitColor(card) {
-  return SUIT_COLORS[card?.arcana] || COLORS.GOLD;
+export function getSuitColor(card, themeId) {
+  const sc = getSuitColors(themeId);
+  const c = getColors(themeId);
+  return sc[card?.arcana] || c.GOLD;
 }

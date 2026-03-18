@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAreaView, Modal } from 'react-native';
 import { ALL_CARDS } from '../data/cards';
 import { getTexts } from '../services/i18n';
-import { COLORS, SUIT_COLORS, SUIT_LABELS } from '../constants/theme';
+import { getColors } from '../constants/theme';
 import { getSuitColor } from '../utils/cardUtils';
 import TarotCardImage from '../components/TarotCardImage';
 
@@ -25,8 +25,16 @@ const ASTRO_ICON = {
   '海王星': '♆', '冥王星': '♇',
 };
 
-export default function CardsScreen({ lang = 'zh' }) {
+const SUIT_LABELS = {
+  zh: { major: '大阿尔卡纳', wands: '权杖', cups: '圣杯', swords: '宝剑', pentacles: '星币' },
+  en: { major: 'Major Arcana', wands: 'Wands', cups: 'Cups', swords: 'Swords', pentacles: 'Pentacles' },
+  ja: { major: '大アルカナ', wands: 'ワンド', cups: 'カップ', swords: 'ソード', pentacles: 'ペンタクル' },
+};
+
+export default function CardsScreen({ lang = 'zh', theme = 'cosmic' }) {
   const t = getTexts(lang);
+  const colors = useMemo(() => getColors(theme), [theme]);
+  const ds = useMemo(() => cs(colors), [theme]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [selected, setSelected] = useState(null);
@@ -43,20 +51,20 @@ export default function CardsScreen({ lang = 'zh' }) {
   const suitLabels = SUIT_LABELS[lang] || SUIT_LABELS.zh;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={ds.safe}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>{t.cardsTitle}</Text>
+        <Text style={ds.pageTitle}>{t.cardsTitle}</Text>
         <TextInput
-          style={styles.searchInput}
+          style={ds.searchInput}
           placeholder={t.searchPlaceholder}
-          placeholderTextColor={COLORS.TEXT_MUTED}
+          placeholderTextColor={colors.TEXT_MUTED}
           value={search}
           onChangeText={setSearch}
         />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={styles.filterContent}>
           {FILTER_SUITS.map(suit => (
-            <TouchableOpacity key={suit} style={[styles.filterChip, filter === suit && styles.filterChipActive]} onPress={() => setFilter(suit)}>
-              <Text style={[styles.filterChipText, filter === suit && styles.filterChipTextActive]}>
+            <TouchableOpacity key={suit} style={[ds.filterChip, filter === suit && ds.filterChipActive]} onPress={() => setFilter(suit)}>
+              <Text style={[ds.filterChipText, filter === suit && styles.filterChipTextActive]}>
                 {suit === 'all' ? t.allCards : suitLabels[suit]}
               </Text>
             </TouchableOpacity>
@@ -66,14 +74,14 @@ export default function CardsScreen({ lang = 'zh' }) {
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
         {filtered.map(card => {
-          const suitColor = getSuitColor(card);
+          const suitColor = getSuitColor(card, theme);
           const name = card.name[lang] || card.name.zh;
           return (
-            <TouchableOpacity key={card.id} style={styles.cardRow} onPress={() => setSelected(card)} activeOpacity={0.7}>
-              <TarotCardImage card={card} width={56} height={88} style={styles.cardThumb} />
+            <TouchableOpacity key={card.id} style={ds.cardRow} onPress={() => setSelected(card)} activeOpacity={0.7}>
+              <TarotCardImage card={card} width={56} height={88} style={styles.cardThumb} theme={theme} />
               <View style={styles.cardInfo}>
-                <Text style={styles.cardName}>{name}</Text>
-                <Text style={styles.cardKeywords}>{card.keywords.upright.slice(0, 3).join(' · ')}</Text>
+                <Text style={ds.cardName}>{name}</Text>
+                <Text style={ds.cardKeywords}>{card.keywords.upright.slice(0, 3).join(' · ')}</Text>
                 {(card.element || card.astrology) ? (
                   <View style={styles.cardMetaRow}>
                     {card.element && ELEMENT_ICON[card.element] ? (
@@ -83,16 +91,16 @@ export default function CardsScreen({ lang = 'zh' }) {
                       </View>
                     ) : null}
                     {card.astrology ? (
-                      <View style={[styles.metaBadge, { borderColor: COLORS.GOLD + '40' }]}>
+                      <View style={[styles.metaBadge, { borderColor: colors.GOLD + '40' }]}>
                         <Text style={styles.metaIcon}>{ASTRO_ICON[card.astrology] || '✦'}</Text>
-                        <Text style={[styles.metaText, { color: COLORS.TEXT_SECONDARY }]}>{card.astrology}</Text>
+                        <Text style={[styles.metaText, { color: colors.TEXT_SECONDARY }]}>{card.astrology}</Text>
                       </View>
                     ) : null}
                   </View>
                 ) : null}
-                <Text style={styles.cardSummary} numberOfLines={2}>{card.meaning.upright[lang] || card.meaning.upright.zh}</Text>
+                <Text style={ds.cardSummary} numberOfLines={2}>{card.meaning.upright[lang] || card.meaning.upright.zh}</Text>
               </View>
-              <Text style={styles.cardArrow}>›</Text>
+              <Text style={ds.cardArrow}>›</Text>
             </TouchableOpacity>
           );
         })}
@@ -101,51 +109,48 @@ export default function CardsScreen({ lang = 'zh' }) {
       {/* Card Detail Modal */}
       <Modal visible={!!selected} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelected(null)}>
         {selected && (
-          <SafeAreaView style={styles.modal}>
+          <SafeAreaView style={ds.modal}>
             <ScrollView contentContainerStyle={styles.modalContent}>
               <TouchableOpacity onPress={() => setSelected(null)} style={styles.closeBtn}>
-                <Text style={styles.closeBtnText}>✕</Text>
+                <Text style={ds.closeBtnText}>✕</Text>
               </TouchableOpacity>
-              <TarotCardImage card={selected} width={120} height={190} style={styles.modalCardImg} />
-              <Text style={styles.detailName}>{selected.name[lang] || selected.name.zh}</Text>
+              <TarotCardImage card={selected} width={120} height={190} style={styles.modalCardImg} theme={theme} />
+              <Text style={ds.detailName}>{selected.name[lang] || selected.name.zh}</Text>
               {(selected.element || selected.astrology) ? (
                 <View style={styles.detailMetaRow}>
-                  {/* 图标已能表意，标签文字注释掉保留备用 */}
                   {selected.element && ELEMENT_ICON[selected.element] ? (
                     <View style={[styles.detailMetaBadge, { backgroundColor: ELEMENT_ICON[selected.element].color + '18', borderColor: ELEMENT_ICON[selected.element].color + '50' }]}>
                       <Text style={styles.detailMetaEmoji}>{ELEMENT_ICON[selected.element].emoji}</Text>
-                      {/* <Text style={styles.detailMetaLabel}>{t.element}</Text> */}
                       <Text style={[styles.detailMetaValue, { color: ELEMENT_ICON[selected.element].color }]}>{selected.element}</Text>
                     </View>
                   ) : null}
                   {selected.astrology ? (
-                    <View style={[styles.detailMetaBadge, { backgroundColor: COLORS.GOLD + '12', borderColor: COLORS.GOLD + '40' }]}>
+                    <View style={[styles.detailMetaBadge, { backgroundColor: colors.GOLD + '12', borderColor: colors.GOLD + '40' }]}>
                       <Text style={styles.detailMetaEmoji}>{ASTRO_ICON[selected.astrology] || '✦'}</Text>
-                      {/* <Text style={styles.detailMetaLabel}>{t.astrology}</Text> */}
-                      <Text style={[styles.detailMetaValue, { color: COLORS.GOLD }]}>{selected.astrology}</Text>
+                      <Text style={[styles.detailMetaValue, { color: colors.GOLD }]}>{selected.astrology}</Text>
                     </View>
                   ) : null}
                 </View>
               ) : null}
 
-              <View style={styles.meaningBlock}>
-                <Text style={styles.meaningLabel}>▲ {t.upright}</Text>
+              <View style={ds.meaningBlock}>
+                <Text style={ds.meaningLabel}>▲ {t.upright}</Text>
                 <View style={styles.keywordRow}>
                   {selected.keywords.upright.map((k, i) => (
-                    <View key={i} style={styles.keyword}><Text style={styles.keywordText}>{k}</Text></View>
+                    <View key={i} style={ds.keyword}><Text style={ds.keywordText}>{k}</Text></View>
                   ))}
                 </View>
-                <Text style={styles.meaningText}>{selected.meaning.upright[lang] || selected.meaning.upright.zh}</Text>
+                <Text style={ds.meaningText}>{selected.meaning.upright[lang] || selected.meaning.upright.zh}</Text>
               </View>
 
-              <View style={[styles.meaningBlock, styles.reversedBlock]}>
-                <Text style={[styles.meaningLabel, styles.reversedLabel]}>▼ {t.reversed}</Text>
+              <View style={[ds.reversedBlock]}>
+                <Text style={ds.reversedLabel}>▼ {t.reversed}</Text>
                 <View style={styles.keywordRow}>
                   {selected.keywords.reversed.map((k, i) => (
-                    <View key={i} style={[styles.keyword, styles.keywordReversed]}><Text style={[styles.keywordText, styles.keywordReversedText]}>{k}</Text></View>
+                    <View key={i} style={ds.keywordReversed}><Text style={ds.keywordReversedText}>{k}</Text></View>
                   ))}
                 </View>
-                <Text style={styles.meaningText}>{selected.meaning.reversed[lang] || selected.meaning.reversed.zh}</Text>
+                <Text style={ds.meaningText}>{selected.meaning.reversed[lang] || selected.meaning.reversed.zh}</Text>
               </View>
             </ScrollView>
           </SafeAreaView>
@@ -155,49 +160,55 @@ export default function CardsScreen({ lang = 'zh' }) {
   );
 }
 
+// Layout-only static styles (no colors)
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.BG_PAGE },
   header: { padding: 20, paddingBottom: 0 },
-  pageTitle: { fontSize: 28, fontWeight: '800', color: COLORS.GOLD, marginBottom: 12 },
-  searchInput: { backgroundColor: COLORS.BG_CARD, borderRadius: 10, padding: 12, color: COLORS.TEXT_PRIMARY, fontSize: 16, borderWidth: 1, borderColor: COLORS.BORDER, marginBottom: 12 },
   filterRow: { marginBottom: 8 },
   filterContent: { gap: 8, paddingRight: 20 },
-  filterChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: COLORS.BG_CARD, borderWidth: 1, borderColor: COLORS.BORDER },
-  filterChipActive: { backgroundColor: COLORS.PRIMARY, borderColor: COLORS.PRIMARY },
-  filterChipText: { color: COLORS.TEXT_MUTED, fontSize: 15 },
   filterChipTextActive: { color: '#fff', fontWeight: '600' },
   list: { flex: 1 },
   listContent: { padding: 16, gap: 2 },
-  cardRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.BG_CARD, borderRadius: 12, padding: 12, marginBottom: 8 },
   cardThumb: { marginRight: 14, borderRadius: 8 },
   cardInfo: { flex: 1 },
-  cardName: { fontSize: 17, fontWeight: '600', color: COLORS.TEXT_PRIMARY },
-  cardKeywords: { fontSize: 14, color: COLORS.GOLD, marginTop: 3 },
   cardMetaRow: { flexDirection: 'row', gap: 6, marginTop: 4, flexWrap: 'wrap' },
   metaBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 8, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
   metaIcon: { fontSize: 12 },
   metaText: { fontSize: 11, fontWeight: '600' },
-  cardSummary: { fontSize: 13, color: COLORS.TEXT_MUTED, marginTop: 4, lineHeight: 19 },
-  cardArrow: { color: COLORS.TEXT_MUTED, fontSize: 22 },
-  modal: { flex: 1, backgroundColor: COLORS.BG_PAGE },
   modalContent: { padding: 24, paddingBottom: 40, alignItems: 'center' },
   closeBtn: { alignSelf: 'flex-end', padding: 8 },
-  closeBtnText: { color: COLORS.TEXT_MUTED, fontSize: 18 },
   modalCardImg: { marginVertical: 20, borderRadius: 12 },
-  detailName: { fontSize: 26, fontWeight: '800', color: COLORS.GOLD, marginBottom: 8 },
   detailMetaRow: { flexDirection: 'row', gap: 10, marginBottom: 16, flexWrap: 'wrap' },
   detailMetaBadge: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
   detailMetaEmoji: { fontSize: 24 },
-  detailMetaLabel: { fontSize: 12, color: COLORS.TEXT_MUTED, marginBottom: 1 },
   detailMetaValue: { fontSize: 16, fontWeight: '700' },
-  meaningBlock: { width: '100%', backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 16, marginTop: 16, borderWidth: 1, borderColor: COLORS.BORDER_GOLD },
-  reversedBlock: { borderColor: COLORS.BORDER },
-  meaningLabel: { fontSize: 14, fontWeight: '700', color: COLORS.GOLD, letterSpacing: 1, marginBottom: 10 },
-  reversedLabel: { color: COLORS.TEXT_MUTED },
   keywordRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
-  keyword: { backgroundColor: 'rgba(240,192,64,0.15)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
-  keywordReversed: { backgroundColor: 'rgba(167,139,250,0.1)' },
-  keywordText: { color: COLORS.GOLD, fontSize: 14 },
-  keywordReversedText: { color: COLORS.TEXT_MUTED },
-  meaningText: { fontSize: 16, color: COLORS.TEXT_PRIMARY, lineHeight: 26 },
 });
+
+// Color-dependent styles helper
+function cs(colors) {
+  return {
+    safe: { flex: 1, backgroundColor: colors.BG_PAGE },
+    pageTitle: { fontSize: 28, fontWeight: '800', color: colors.GOLD, marginBottom: 12 },
+    searchInput: { backgroundColor: colors.BG_CARD, borderRadius: 10, padding: 12, color: colors.TEXT_PRIMARY, fontSize: 16, borderWidth: 1, borderColor: colors.BORDER, marginBottom: 12 },
+    filterChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: colors.BG_CARD, borderWidth: 1, borderColor: colors.BORDER },
+    filterChipActive: { backgroundColor: colors.PRIMARY, borderColor: colors.PRIMARY },
+    filterChipText: { color: colors.TEXT_MUTED, fontSize: 15 },
+    cardRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.BG_CARD, borderRadius: 12, padding: 12, marginBottom: 8 },
+    cardName: { fontSize: 17, fontWeight: '600', color: colors.TEXT_PRIMARY },
+    cardKeywords: { fontSize: 14, color: colors.GOLD, marginTop: 3 },
+    cardSummary: { fontSize: 13, color: colors.TEXT_MUTED, marginTop: 4, lineHeight: 19 },
+    cardArrow: { color: colors.TEXT_MUTED, fontSize: 22 },
+    modal: { flex: 1, backgroundColor: colors.BG_PAGE },
+    closeBtnText: { color: colors.TEXT_MUTED, fontSize: 18 },
+    detailName: { fontSize: 26, fontWeight: '800', color: colors.GOLD, marginBottom: 8 },
+    meaningBlock: { width: '100%', backgroundColor: colors.BG_CARD, borderRadius: 14, padding: 16, marginTop: 16, borderWidth: 1, borderColor: colors.BORDER_GOLD },
+    reversedBlock: { width: '100%', backgroundColor: colors.BG_CARD, borderRadius: 14, padding: 16, marginTop: 16, borderWidth: 1, borderColor: colors.BORDER },
+    meaningLabel: { fontSize: 14, fontWeight: '700', color: colors.GOLD, letterSpacing: 1, marginBottom: 10 },
+    reversedLabel: { fontSize: 14, fontWeight: '700', color: colors.TEXT_MUTED, letterSpacing: 1, marginBottom: 10 },
+    keyword: { backgroundColor: colors.GOLD + '26', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
+    keywordReversed: { backgroundColor: colors.PRIMARY + '1A', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
+    keywordText: { color: colors.GOLD, fontSize: 14 },
+    keywordReversedText: { color: colors.TEXT_MUTED, fontSize: 14 },
+    meaningText: { fontSize: 16, color: colors.TEXT_PRIMARY, lineHeight: 26 },
+  };
+}

@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, StyleSheet, SafeAreaView, Platform } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { View, Text, Animated, TouchableOpacity, TextInput, ScrollView, StyleSheet, SafeAreaView, Platform } from 'react-native';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
 import { getTexts } from '../services/i18n';
@@ -7,22 +7,85 @@ import { getSettings } from '../services/settingsStorage';
 import { addReading } from '../services/historyStorage';
 import { analyzeSpreadStream } from '../services/tarotAnalyzer';
 import { drawRandom, SPREADS } from '../data/cards';
-import { COLORS, SUIT_COLORS, CAUTION, BASE_STYLES } from '../constants/theme';
+import { getColors, CAUTION } from '../constants/theme';
 import { extractStreamingReadable } from '../utils/streamingParser';
 import { getSuitColor } from '../utils/cardUtils';
 import TarotCardImage from '../components/TarotCardImage';
 import FlipCard from '../components/FlipCard';
+import MatrixRain from '../components/MatrixRain';
 import NebulaBackground from '../components/NebulaBackground';
 import EnergyTagRow from '../components/EnergyTagRow';
 import CardReadingBlock from '../components/CardReadingBlock';
 
 const WORKER_URL = 'https://tarot-proxy.zhouweiqiang.workers.dev/';
 
-function StreamingPreview({ text }) {
-  const display = extractStreamingReadable(text, '');
-  if (!display) return <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>;
-  return <Text style={styles.streamingText}>{display}</Text>;
+// Typewriter: one char at a time, fill → fade → next line
+function TypewriterLine({ streamingText, colors }) {
+  const [line, setLine] = useState('');
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const pointerRef = useRef(0);   // position in source text
+  const sourceRef = useRef('');
+  const fadingRef = useRef(false);
+
+  // Keep source up to date from streaming
+  useEffect(() => {
+    const readable = extractStreamingReadable(streamingText, '');
+    if (readable && readable.length > sourceRef.current.length) {
+      sourceRef.current = readable;
+    }
+  }, [streamingText]);
+
+  // Typing loop
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (fadingRef.current) return;
+      const src = sourceRef.current;
+      if (!src || pointerRef.current >= src.length) return;
+
+      pointerRef.current++;
+      const idx = pointerRef.current;
+      // Show a sliding window — keep last ~35 chars visible
+      const windowStart = Math.max(0, idx - 35);
+      const text = src.slice(windowStart, idx);
+      setLine(text);
+
+      // When line is long enough and hits punctuation, fade out
+      const lastChar = src[idx - 1];
+      const isPunct = '，。！？、；：…\n'.includes(lastChar);
+      if ((isPunct && text.length >= 18) || text.length >= 35) {
+        fadingRef.current = true;
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }).start(() => {
+          setLine('');
+          fadeAnim.setValue(1);
+          fadingRef.current = false;
+        });
+      }
+    }, 55);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!line) return null;
+
+  return (
+    <Animated.View style={[twStyles.container, { opacity: fadeAnim }]}>
+      <Text style={[twStyles.text, { color: colors.GOLD }]}>
+        {line}
+        <Text style={[twStyles.cursor, { color: colors.GOLD }]}>▎</Text>
+      </Text>
+    </Animated.View>
+  );
 }
+
+const twStyles = StyleSheet.create({
+  container: { marginTop: 24, paddingHorizontal: 16, alignItems: 'center' },
+  text: { fontSize: 16, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', lineHeight: 24, textAlign: 'center' },
+  cursor: { opacity: 0.5 },
+});
 
 async function transcribeAudio(base64, mimeType) {
   const body = {
@@ -45,8 +108,10 @@ async function transcribeAudio(base64, mimeType) {
   return data.candidates?.[0]?.content?.parts?.find(p => p.text && !p.thought)?.text || '';
 }
 
-export default function SpreadScreen({ lang = 'zh', onNavigate }) {
+export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', animStyle = 'matrix', onNavigate }) {
   const t = getTexts(lang);
+  const colors = useMemo(() => getColors(theme), [theme]);
+  const ds = useMemo(() => cs(colors), [theme]);
   const [step, setStep] = useState('select'); // 'select' | 'question' | 'draw' | 'reading'
   const [selectedSpread, setSelectedSpread] = useState(null);
   const [question, setQuestion] = useState('');
@@ -203,18 +268,18 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   // ─── Step: Select Spread ───
   if (step === 'select') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={ds.safe}>
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-          <Text style={styles.pageTitle}>{t.spreadTitle}</Text>
+          <Text style={ds.pageTitle}>{t.spreadTitle}</Text>
           {Object.values(SPREADS).map(spread => (
-            <TouchableOpacity key={spread.id} style={styles.spreadCard} onPress={() => handleSelectSpread(spread)} activeOpacity={0.8}>
+            <TouchableOpacity key={spread.id} style={ds.spreadCard} onPress={() => handleSelectSpread(spread)} activeOpacity={0.8}>
               <View style={styles.spreadCardInner}>
-                <Text style={styles.spreadName}>{spread.name[lang]}</Text>
-                <Text style={styles.spreadCount}>{spread.count} 张</Text>
+                <Text style={ds.spreadName}>{spread.name[lang]}</Text>
+                <Text style={ds.spreadCount}>{spread.count} 张</Text>
               </View>
               <View style={styles.positionPills}>
                 {spread.positions.map((p, i) => (
-                  <View key={i} style={styles.posPill}><Text style={styles.posPillText}>{p[lang]}</Text></View>
+                  <View key={i} style={ds.posPill}><Text style={ds.posPillText}>{p[lang]}</Text></View>
                 ))}
               </View>
             </TouchableOpacity>
@@ -227,23 +292,23 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   // ─── Step: Enter Question ───
   if (step === 'question') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={ds.safe}>
         <View style={styles.content}>
-          <TouchableOpacity onPress={() => setStep('select')}><Text style={styles.backBtn}>← {selectedSpread.name[lang]}</Text></TouchableOpacity>
-          <Text style={styles.pageTitle}>{t.spreadQuestion}</Text>
+          <TouchableOpacity onPress={() => setStep('select')}><Text style={ds.backBtn}>← {selectedSpread.name[lang]}</Text></TouchableOpacity>
+          <Text style={ds.pageTitle}>{t.spreadQuestion}</Text>
           <TextInput
-            style={styles.questionInput}
+            style={ds.questionInput}
             placeholder={t.spreadQuestionHint}
-            placeholderTextColor={COLORS.TEXT_MUTED}
+            placeholderTextColor={colors.TEXT_MUTED}
             value={question}
             onChangeText={setQuestion}
             multiline
           />
-          <TouchableOpacity style={[styles.micBtn, isRecording && styles.micBtnActive]} onPress={handleMicPress} activeOpacity={0.8} disabled={isTranscribing}>
-            <Text style={styles.micIcon}>{isTranscribing ? '⏳' : isRecording ? '⏹ 停止录音' : '🎤 语音输入'}</Text>
+          <TouchableOpacity style={[ds.micBtn, isRecording && styles.micBtnActive]} onPress={handleMicPress} activeOpacity={0.8} disabled={isTranscribing}>
+            <Text style={ds.micIcon}>{isTranscribing ? '⏳' : isRecording ? '⏹ 停止录音' : '🎤 语音输入'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleStartDraw} activeOpacity={0.8}>
-            <Text style={styles.primaryBtnText}>{t.startReading}</Text>
+          <TouchableOpacity style={ds.primaryBtn} onPress={handleStartDraw} activeOpacity={0.8}>
+            <Text style={ds.primaryBtnText}>{t.startReading}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -255,7 +320,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
     const item = drawnCards[i];
     if (!item) return null;
     const isRevealed = revealed.includes(i);
-    const suitColor = getSuitColor(item.card);
+    const suitColor = getSuitColor(item.card, theme);
     return (
       <View key={i} style={[styles.cardSlot, extraStyle]}>
         <FlipCard
@@ -272,10 +337,10 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
             <Text style={[styles.revealedName, { color: suitColor }]} numberOfLines={1}>
               {item.card.name[lang]}
             </Text>
-            <Text style={styles.revealedState}>{item.isReversed ? t.reversed : t.upright}</Text>
+            <Text style={ds.revealedState}>{item.isReversed ? t.reversed : t.upright}</Text>
           </View>
         )}
-        <Text style={styles.cardPosition}>{item.position}</Text>
+        <Text style={ds.cardPosition}>{item.position}</Text>
       </View>
     );
   }
@@ -286,10 +351,10 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
     const isCeltic = selectedSpread?.id === 'celtic_cross';
 
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={ds.safe}>
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-          <Text style={styles.pageTitle}>{selectedSpread.name[lang]}</Text>
-          <Text style={styles.subtitle}>{allRevealed ? t.readingLoading : t.drawCard}</Text>
+          <Text style={ds.pageTitle}>{selectedSpread.name[lang]}</Text>
+          <Text style={ds.subtitle}>{allRevealed ? t.readingLoading : t.drawCard}</Text>
 
           {isCeltic ? (
             /* Celtic Cross layout:
@@ -349,24 +414,24 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
 
   // ─── Step: Reading Result ───
   return (
-    <SafeAreaView style={styles.safe}>
-      {loading && <NebulaBackground />}
+    <SafeAreaView style={ds.safe}>
+      {loading && (animStyle === 'matrix'
+        ? <MatrixRain streamingText={streamingText} colors={colors} />
+        : <NebulaBackground />
+      )}
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <Text style={styles.pageTitle}>{t.cardReading}</Text>
+        <Text style={ds.pageTitle}>{t.cardReading}</Text>
         {loading ? (
           <View style={styles.loadingSection}>
-            <Text style={styles.loadingOrb}>✦</Text>
-            <Text style={styles.loadingText}>{t.readingLoading}</Text>
-            {streamingText ? (
-              <StreamingPreview text={streamingText} />
-            ) : (
-              <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>
-            )}
+            <Text style={[styles.loadingOrb, { color: colors.GOLD }]}>✦</Text>
+            <Text style={[styles.loadingText, { color: colors.TEXT_PRIMARY }]}>{t.readingLoading}</Text>
+            <Text style={[styles.loadingSubtext, { color: colors.TEXT_MUTED }]}>星象正在汇聚，请稍候...</Text>
+            <TypewriterLine streamingText={streamingText} colors={colors} />
           </View>
         ) : result ? (
           <>
             {/* Energy tags */}
-            <EnergyTagRow energies={result.energy} style={{ marginBottom: 20 }} />
+            <EnergyTagRow energies={result.energy} style={{ marginBottom: 20 }} theme={theme} />
 
             {/* Card readings with images */}
             {result.cardReadings?.map((cr, i) => {
@@ -380,43 +445,44 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
                   reading={cr.reading}
                   lang={lang}
                   t={t}
+                  theme={theme}
                 />
               );
             })}
 
             {/* Connections */}
             {result.connections ? (
-              <View style={styles.sectionCard}>
-                <Text style={styles.sectionLabel}>{t.connections}</Text>
-                <Text style={styles.sectionText}>{result.connections}</Text>
+              <View style={ds.sectionCard}>
+                <Text style={ds.sectionLabel}>{t.connections}</Text>
+                <Text style={ds.sectionText}>{result.connections}</Text>
               </View>
             ) : null}
 
             {/* Narrative */}
             {result.narrative ? (
-              <View style={styles.sectionCard}>
-                <Text style={styles.sectionLabel}>{t.narrative}</Text>
-                <Text style={styles.sectionText}>{result.narrative}</Text>
+              <View style={ds.sectionCard}>
+                <Text style={ds.sectionLabel}>{t.narrative}</Text>
+                <Text style={ds.sectionText}>{result.narrative}</Text>
               </View>
             ) : null}
 
             {/* Overall message */}
-            <View style={styles.overallCard}>
-              <Text style={styles.overallLabel}>{t.overallMessage}</Text>
-              <Text style={styles.overallText}>{result.overallMessage}</Text>
-              {result.advice ? <Text style={styles.adviceText}>{result.advice}</Text> : null}
+            <View style={ds.overallCard}>
+              <Text style={ds.overallLabel}>{t.overallMessage}</Text>
+              <Text style={ds.overallText}>{result.overallMessage}</Text>
+              {result.advice ? <Text style={ds.adviceText}>{result.advice}</Text> : null}
             </View>
 
             {/* Caution */}
             {result.caution ? (
-              <View style={styles.cautionCard}>
-                <Text style={styles.cautionLabel}>{t.caution}</Text>
-                <Text style={styles.cautionText}>{result.caution}</Text>
+              <View style={ds.cautionCard}>
+                <Text style={ds.cautionLabel}>{t.caution}</Text>
+                <Text style={ds.cautionText}>{result.caution}</Text>
               </View>
             ) : null}
 
-            <TouchableOpacity style={styles.resetBtn} onPress={reset} activeOpacity={0.8}>
-              <Text style={styles.resetBtnText}>重新占卜</Text>
+            <TouchableOpacity style={ds.resetBtn} onPress={reset} activeOpacity={0.8}>
+              <Text style={ds.resetBtnText}>重新占卜</Text>
             </TouchableOpacity>
           </>
         ) : null}
@@ -425,33 +491,13 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   );
 }
 
+// Layout-only static styles (no colors)
 const styles = StyleSheet.create({
-  safe: BASE_STYLES.safe,
-  container: BASE_STYLES.container,
+  container: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
-  pageTitle: BASE_STYLES.pageTitle,
-  subtitle: { fontSize: 15, color: COLORS.TEXT_SECONDARY, marginBottom: 24 },
-  backBtn: { color: COLORS.TEXT_SECONDARY, fontSize: 16, marginBottom: 20 },
-  spreadCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.BORDER },
   spreadCardInner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  spreadName: { fontSize: 19, fontWeight: '700', color: COLORS.TEXT_PRIMARY },
-  spreadCount: { fontSize: 15, color: COLORS.TEXT_MUTED },
   positionPills: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-  posPill: { backgroundColor: COLORS.BG_GLASS, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
-  posPillText: { color: COLORS.TEXT_SECONDARY, fontSize: 14 },
-  questionInput: {
-    backgroundColor: COLORS.BG_CARD, borderRadius: 12, padding: 16,
-    color: COLORS.TEXT_PRIMARY, fontSize: 17, minHeight: 100,
-    borderWidth: 1, borderColor: COLORS.BORDER, marginBottom: 24,
-    textAlignVertical: 'top',
-  },
-  micBtn: { borderRadius: 30, borderWidth: 1, borderColor: COLORS.BORDER, padding: 12, alignItems: 'center', marginBottom: 12 },
-  micBtnActive: { borderColor: '#e53935', backgroundColor: '#e5393520' },
-  micIcon: { color: COLORS.TEXT_SECONDARY, fontSize: 17 },
-  primaryBtn: { backgroundColor: COLORS.GOLD, borderRadius: 30, padding: 16, alignItems: 'center' },
-  primaryBtnText: { color: COLORS.BG_DEEP, fontWeight: '700', fontSize: 18 },
   cardsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
-  // Celtic Cross layout
   celticContainer: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
   celticCross: { alignItems: 'center' },
   celticRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -461,23 +507,47 @@ const styles = StyleSheet.create({
   cardSlot: { alignItems: 'center', width: 90 },
   revealedBadge: { marginTop: 6, borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center', width: '100%' },
   revealedName: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
-  revealedState: { fontSize: 12, color: COLORS.TEXT_MUTED, marginTop: 1 },
-  cardPosition: { marginTop: 4, fontSize: 13, color: COLORS.TEXT_SECONDARY, textAlign: 'center' },
   loadingSection: { alignItems: 'center', gap: 16, paddingTop: 60 },
-  loadingOrb: { fontSize: 56, color: COLORS.GOLD },
-  loadingText: { color: COLORS.TEXT_PRIMARY, fontSize: 19, fontWeight: '600' },
-  loadingSubtext: { color: COLORS.TEXT_MUTED, fontSize: 15 },
-  streamingText: { color: COLORS.TEXT_PRIMARY, fontSize: 16, lineHeight: 26, marginTop: 16, paddingHorizontal: 8 },
-  overallCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 18, marginTop: 8, borderWidth: 1, borderColor: COLORS.BORDER_GOLD, gap: 10 },
-  overallLabel: { fontSize: 14, color: COLORS.GOLD, fontWeight: '700', letterSpacing: 1 },
-  overallText: { fontSize: 17, color: COLORS.TEXT_PRIMARY, lineHeight: 28 },
-  adviceText: { fontSize: 16, color: COLORS.TEXT_SECONDARY, lineHeight: 26 },
-  sectionCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.BORDER, gap: 8 },
-  sectionLabel: { fontSize: 13, color: COLORS.PRIMARY_LIGHT, fontWeight: '700', letterSpacing: 0.5 },
-  sectionText: { fontSize: 16, color: COLORS.TEXT_PRIMARY, lineHeight: 26 },
-  cautionCard: { backgroundColor: CAUTION.BG, borderRadius: 14, padding: 16, marginTop: 8, borderWidth: 1, borderColor: CAUTION.BORDER, gap: 8 },
-  cautionLabel: { fontSize: 13, color: CAUTION.TEXT, fontWeight: '700', letterSpacing: 0.5 },
-  cautionText: { fontSize: 16, color: COLORS.TEXT_SECONDARY, lineHeight: 26 },
-  resetBtn: { marginTop: 24, borderRadius: 30, borderWidth: 1, borderColor: COLORS.BORDER, padding: 14, alignItems: 'center' },
-  resetBtnText: { color: COLORS.TEXT_SECONDARY, fontSize: 17 },
+  loadingOrb: { fontSize: 56 },
+  loadingText: { fontSize: 19, fontWeight: '600' },
+  loadingSubtext: { fontSize: 15 },
+  micBtnActive: { borderColor: '#e53935', backgroundColor: '#e5393520' },
 });
+
+// Color-dependent styles helper
+function cs(colors) {
+  return {
+    safe: { flex: 1, backgroundColor: colors.BG_PAGE },
+    pageTitle: { fontSize: 28, fontWeight: '800', color: colors.GOLD, marginBottom: 8 },
+    subtitle: { fontSize: 15, color: colors.TEXT_SECONDARY, marginBottom: 24 },
+    backBtn: { color: colors.TEXT_SECONDARY, fontSize: 16, marginBottom: 20 },
+    spreadCard: { backgroundColor: colors.BG_CARD, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.BORDER },
+    spreadName: { fontSize: 19, fontWeight: '700', color: colors.TEXT_PRIMARY },
+    spreadCount: { fontSize: 15, color: colors.TEXT_MUTED },
+    posPill: { backgroundColor: colors.BG_GLASS, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
+    posPillText: { color: colors.TEXT_SECONDARY, fontSize: 14 },
+    questionInput: {
+      backgroundColor: colors.BG_CARD, borderRadius: 12, padding: 16,
+      color: colors.TEXT_PRIMARY, fontSize: 17, minHeight: 100,
+      borderWidth: 1, borderColor: colors.BORDER, marginBottom: 24, textAlignVertical: 'top',
+    },
+    micBtn: { borderRadius: 30, borderWidth: 1, borderColor: colors.BORDER, padding: 12, alignItems: 'center', marginBottom: 12 },
+    micIcon: { color: colors.TEXT_SECONDARY, fontSize: 17 },
+    primaryBtn: { backgroundColor: colors.GOLD, borderRadius: 30, padding: 16, alignItems: 'center' },
+    primaryBtnText: { color: colors.BG_DEEP, fontWeight: '700', fontSize: 18 },
+    revealedState: { fontSize: 12, color: colors.TEXT_MUTED, marginTop: 1 },
+    cardPosition: { marginTop: 4, fontSize: 13, color: colors.TEXT_SECONDARY, textAlign: 'center' },
+    overallCard: { backgroundColor: colors.BG_CARD, borderRadius: 14, padding: 18, marginTop: 8, borderWidth: 1, borderColor: colors.BORDER_GOLD, gap: 10 },
+    overallLabel: { fontSize: 14, color: colors.GOLD, fontWeight: '700', letterSpacing: 1 },
+    overallText: { fontSize: 17, color: colors.TEXT_PRIMARY, lineHeight: 28 },
+    adviceText: { fontSize: 16, color: colors.TEXT_SECONDARY, lineHeight: 26 },
+    sectionCard: { backgroundColor: colors.BG_CARD, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.BORDER, gap: 8 },
+    sectionLabel: { fontSize: 13, color: colors.PRIMARY_LIGHT, fontWeight: '700', letterSpacing: 0.5 },
+    sectionText: { fontSize: 16, color: colors.TEXT_PRIMARY, lineHeight: 26 },
+    cautionCard: { backgroundColor: CAUTION.BG, borderRadius: 14, padding: 16, marginTop: 8, borderWidth: 1, borderColor: CAUTION.BORDER, gap: 8 },
+    cautionLabel: { fontSize: 13, color: CAUTION.TEXT, fontWeight: '700', letterSpacing: 0.5 },
+    cautionText: { fontSize: 16, color: colors.TEXT_SECONDARY, lineHeight: 26 },
+    resetBtn: { marginTop: 24, borderRadius: 30, borderWidth: 1, borderColor: colors.BORDER, padding: 14, alignItems: 'center' },
+    resetBtnText: { color: colors.TEXT_SECONDARY, fontSize: 17 },
+  };
+}
