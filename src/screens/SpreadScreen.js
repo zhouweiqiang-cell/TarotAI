@@ -267,6 +267,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
           width={width}
           height={height}
           disabled={isRevealed}
+          theme={theme}
         />
         {isRevealed && (
           <View style={[styles.revealedBadge, { backgroundColor: suitColor + '22', borderColor: suitColor }]}>
