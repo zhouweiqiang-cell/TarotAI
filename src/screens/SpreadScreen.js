@@ -377,27 +377,24 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
     return (
       <SafeAreaView style={ds.safe}>
         {isDune && <DuneBackground />}
-        <ScrollView style={styles.container} contentContainerStyle={[styles.content, !isCeltic && styles.drawContentCenter]}>
+        <ScrollView style={styles.container} contentContainerStyle={[styles.content, !isCeltic && styles.drawContentGrow]}>
           <Text style={ds.pageTitle}>{selectedSpread.name[lang]}</Text>
           <Text style={ds.subtitle}>{allRevealed ? t.readingLoading : t.drawCard}</Text>
 
           {selectedSpread?.id === 'five_card' ? (
-            /* Five Card cross layout:
-                     [0 核心]
-                [1 有利]  [2 不利]
-                  [3 建议] [4 结果]
-            */
-            <View style={styles.fiveCardLayout}>
-              <View style={styles.fiveCardRow}>
-                {renderCardSlot(0, 80, 125)}
-              </View>
-              <View style={styles.fiveCardRowWide}>
-                {renderCardSlot(1, 80, 125)}
-                {renderCardSlot(2, 80, 125)}
-              </View>
-              <View style={styles.fiveCardRow}>
-                {renderCardSlot(3, 80, 125)}
-                {renderCardSlot(4, 80, 125)}
+            <View style={styles.drawCardsCenter}>
+              <View style={styles.fiveCardLayout}>
+                <View style={styles.fiveCardRow}>
+                  {renderCardSlot(0, 80, 125)}
+                </View>
+                <View style={styles.fiveCardRowWide}>
+                  {renderCardSlot(1, 80, 125)}
+                  {renderCardSlot(2, 80, 125)}
+                </View>
+                <View style={styles.fiveCardRow}>
+                  {renderCardSlot(3, 80, 125)}
+                  {renderCardSlot(4, 80, 125)}
+                </View>
               </View>
             </View>
           ) : isCeltic ? (
@@ -447,8 +444,10 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
               </View>
             </View>
           ) : (
-            <View style={styles.cardsGrid}>
-              {drawnCards.map((_, i) => renderCardSlot(i))}
+            <View style={styles.drawCardsCenter}>
+              <View style={styles.cardsGrid}>
+                {drawnCards.map((_, i) => renderCardSlot(i))}
+              </View>
             </View>
           )}
         </ScrollView>
@@ -539,7 +538,8 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
-  drawContentCenter: { flexGrow: 1, justifyContent: 'center' },
+  drawContentGrow: { flexGrow: 1 },
+  drawCardsCenter: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   spreadCardOverflow: { overflow: 'hidden' },
   spreadCardInner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   spreadCardText: { flex: 1 },
