@@ -19,12 +19,38 @@ export default function TypewriterLine({ streamingText }) {
     }
   }, [streamingText]);
 
+  // Track whether we're waiting for more text after catching up
+  const waitingRef = useRef(false);
+
   // Typing loop
   useEffect(() => {
     const interval = setInterval(() => {
       if (fadingRef.current) return;
       const src = sourceRef.current;
-      if (!src || pointerRef.current >= src.length) return;
+
+      // Nothing to show yet
+      if (!src) return;
+
+      // Pointer caught up to source — fade out current line and wait
+      if (pointerRef.current >= src.length) {
+        if (line && !waitingRef.current) {
+          waitingRef.current = true;
+          fadingRef.current = true;
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }).start(() => {
+            setLine('');
+            fadeAnim.setValue(1);
+            fadingRef.current = false;
+          });
+        }
+        return;
+      }
+
+      // New text available after waiting
+      waitingRef.current = false;
 
       pointerRef.current++;
       const idx = pointerRef.current;
@@ -38,7 +64,7 @@ export default function TypewriterLine({ streamingText }) {
         fadingRef.current = true;
         Animated.timing(fadeAnim, {
           toValue: 0,
-          duration: 400,
+          duration: 300,
           useNativeDriver: true,
         }).start(() => {
           setLine('');
@@ -46,10 +72,10 @@ export default function TypewriterLine({ streamingText }) {
           fadingRef.current = false;
         });
       }
-    }, 55);
+    }, 35);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [line]);
 
   if (!line) return null;
 
