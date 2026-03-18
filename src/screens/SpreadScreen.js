@@ -26,8 +26,10 @@ async function transcribeAudio(base64, mimeType) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || 'transcription failed');
+  const raw = await res.text();
+  let data;
+  try { data = JSON.parse(raw); } catch { throw new Error('响应解析失败: ' + raw.slice(0, 200)); }
+  if (!res.ok) throw new Error('API错误(' + res.status + '): ' + (data.error?.message || raw.slice(0, 200)));
   return data.candidates?.[0]?.content?.parts?.find(p => p.text && !p.thought)?.text || '';
 }
 
@@ -138,7 +140,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
         await recordingRef.current.stopAndUnloadAsync();
         const uri = recordingRef.current.getURI();
         const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-        const text = await transcribeAudio(base64, 'audio/wav');
+        const text = await transcribeAudio(base64, 'audio/aac');
         if (text) setQuestion(text);
         else alert('识别失败，请重试');
       } catch (e) {
@@ -150,28 +152,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
       try {
         await Audio.requestPermissionsAsync();
         await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-        const { recording } = await Audio.Recording.createAsync({
-          android: {
-            extension: '.wav',
-            outputFormat: 6, // WAVE
-            audioEncoder: 3, // PCM_16BIT
-            sampleRate: 16000,
-            numberOfChannels: 1,
-            bitRate: 256000,
-          },
-          ios: {
-            extension: '.wav',
-            outputFormat: 'lpcm',
-            audioQuality: 127,
-            sampleRate: 16000,
-            numberOfChannels: 1,
-            bitRate: 256000,
-            linearPCMBitDepth: 16,
-            linearPCMIsBigEndian: false,
-            linearPCMIsFloat: false,
-          },
-          web: {},
-        });
+        const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
         recordingRef.current = recording;
         setIsRecording(true);
       } catch (e) {
