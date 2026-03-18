@@ -12,6 +12,7 @@ import HomeScreen    from './src/screens/HomeScreen';
 import SpreadScreen  from './src/screens/SpreadScreen';
 import CardsScreen   from './src/screens/CardsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import DuneBackground from './src/components/DuneBackground';
 
 // ─── Tab Icon components ───────────────────────────────
 const SunIcon    = ({ color }) => <Text style={{ fontSize: 22, color }}>☀️</Text>;
@@ -76,6 +77,7 @@ export default function App() {
   return (
     <RootView style={styles.root}>
       <StatusBar style="light" />
+      {theme === 'dune' && <DuneBackground />}
 
       <View style={styles.screenContainer}>
         {activeTab === 'home' && (
