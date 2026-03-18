@@ -91,11 +91,14 @@ const IMAGES = {
   pents_14: require('../../assets/cards/pents_14.jpg'),
 };
 
+const SUIT_KEY = { wands: 'wands', cups: 'cups', swords: 'swords', pentacles: 'pents' };
+
 export function getLocalCardImage(card) {
   if (!card) return null;
   if (card.arcana === 'major') {
     return IMAGES[card.id] || null;
   }
-  const key = `${card.arcana}_${card.number}`;
+  const suitKey = SUIT_KEY[card.arcana] || card.arcana;
+  const key = `${suitKey}_${card.number}`;
   return IMAGES[key] || null;
 }
