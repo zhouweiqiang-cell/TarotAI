@@ -4,8 +4,8 @@ import Svg, { Rect, Path, Circle, Line } from 'react-native-svg';
 import { getColors, getSuitColors } from '../constants/theme';
 import { getLocalCardImage } from '../data/cardImages';
 
-function CardBack({ width, height, colors }) {
-  const isDune = colors.BG_DEEP === '#0F0D08';
+function CardBack({ width, height, colors, theme }) {
+  const isDune = theme === 'dune';
   const accent = isDune ? colors.GOLD : colors.PRIMARY;
   const accentLight = isDune ? colors.GOLD_LIGHT : colors.PRIMARY_LIGHT;
   const bg = colors.BG_CARD;
@@ -84,7 +84,7 @@ export default function TarotCardImage({ card, isReversed = false, width = 100, 
     <View style={[styles.container, { width, height, backgroundColor: colors.BG_CARD }, style]}>
       <View style={[styles.border, { borderColor: suitColor, width, height }]} />
       {showBack || !imageSource ? (
-        <CardBack width={width} height={height} colors={colors} />
+        <CardBack width={width} height={height} colors={colors} theme={theme} />
       ) : (
         <Image source={imageSource} style={[styles.image, isReversed && styles.reversed]} resizeMode="cover" />
       )}
