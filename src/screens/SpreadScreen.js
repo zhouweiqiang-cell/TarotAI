@@ -381,7 +381,26 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
           <Text style={ds.pageTitle}>{selectedSpread.name[lang]}</Text>
           <Text style={ds.subtitle}>{allRevealed ? t.readingLoading : t.drawCard}</Text>
 
-          {isCeltic ? (
+          {selectedSpread?.id === 'five_card' ? (
+            /* Five Card cross layout:
+                     [0 核心]
+                [1 有利]  [2 不利]
+                  [3 建议] [4 结果]
+            */
+            <View style={styles.fiveCardLayout}>
+              <View style={styles.fiveCardRow}>
+                {renderCardSlot(0, 80, 125)}
+              </View>
+              <View style={styles.fiveCardRow}>
+                {renderCardSlot(1, 80, 125)}
+                {renderCardSlot(2, 80, 125)}
+              </View>
+              <View style={styles.fiveCardRow}>
+                {renderCardSlot(3, 80, 125)}
+                {renderCardSlot(4, 80, 125)}
+              </View>
+            </View>
+          ) : isCeltic ? (
             /* Celtic Cross layout:
                Cross section (left): cards 0-5
                Staff section (right): cards 6-9
@@ -525,6 +544,8 @@ const styles = StyleSheet.create({
   spreadCardText: { flex: 1 },
   positionPills: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   cardsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
+  fiveCardLayout: { alignItems: 'center', gap: 8 },
+  fiveCardRow: { flexDirection: 'row', justifyContent: 'center', gap: 16 },
   celticContainer: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
   celticCross: { alignItems: 'center' },
   celticRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
