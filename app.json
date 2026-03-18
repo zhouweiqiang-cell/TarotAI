@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "TarotAI",
+    "slug": "TarotAI",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "bundleIdentifier": "com.tarotai.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#2D1B69"
+      }
+    },
+    "scheme": "tarotai",
+    "plugins": ["expo-font"]
+  }
+}
