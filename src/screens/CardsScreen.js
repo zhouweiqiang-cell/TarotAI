@@ -7,6 +7,23 @@ import TarotCardImage from '../components/TarotCardImage';
 
 const FILTER_SUITS = ['all', 'major', 'wands', 'cups', 'swords', 'pentacles'];
 
+const ELEMENT_ICON = {
+  '火': { emoji: '🔥', color: '#EF4444' },
+  '水': { emoji: '💧', color: '#3B82F6' },
+  '风': { emoji: '🌬️', color: '#A78BFA' },
+  '土': { emoji: '🌿', color: '#10B981' },
+  '风/火': { emoji: '🌪️', color: '#F59E0B' },
+};
+
+const ASTRO_ICON = {
+  '牡羊座': '♈', '金牛座': '♉', '双子座': '♊', '巨蟹座': '♋',
+  '狮子座': '♌', '处女座': '♍', '天秤座': '♎', '天蝎座': '♏',
+  '射手座': '♐', '摩羯座': '♑', '水瓶座': '♒', '双鱼座': '♓',
+  '太阳': '☀️', '月亮': '🌙', '水星': '☿', '金星': '♀',
+  '火星': '♂', '木星': '♃', '土星': '♄', '天王星': '⛢',
+  '海王星': '♆', '冥王星': '♇',
+};
+
 export default function CardsScreen({ lang = 'zh' }) {
   const t = getTexts(lang);
   const [search, setSearch] = useState('');
@@ -56,6 +73,22 @@ export default function CardsScreen({ lang = 'zh' }) {
               <View style={styles.cardInfo}>
                 <Text style={styles.cardName}>{name}</Text>
                 <Text style={styles.cardKeywords}>{card.keywords.upright.slice(0, 3).join(' · ')}</Text>
+                {(card.element || card.astrology) ? (
+                  <View style={styles.cardMetaRow}>
+                    {card.element && ELEMENT_ICON[card.element] ? (
+                      <View style={[styles.metaBadge, { borderColor: ELEMENT_ICON[card.element].color + '60' }]}>
+                        <Text style={styles.metaIcon}>{ELEMENT_ICON[card.element].emoji}</Text>
+                        <Text style={[styles.metaText, { color: ELEMENT_ICON[card.element].color }]}>{card.element}</Text>
+                      </View>
+                    ) : null}
+                    {card.astrology ? (
+                      <View style={[styles.metaBadge, { borderColor: COLORS.GOLD + '40' }]}>
+                        <Text style={styles.metaIcon}>{ASTRO_ICON[card.astrology] || '✦'}</Text>
+                        <Text style={[styles.metaText, { color: COLORS.TEXT_SECONDARY }]}>{card.astrology}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                ) : null}
                 <Text style={styles.cardSummary} numberOfLines={2}>{card.meaning.upright[lang] || card.meaning.upright.zh}</Text>
               </View>
               <Text style={styles.cardArrow}>›</Text>
@@ -74,8 +107,28 @@ export default function CardsScreen({ lang = 'zh' }) {
               </TouchableOpacity>
               <TarotCardImage card={selected} width={120} height={190} style={styles.modalCardImg} />
               <Text style={styles.detailName}>{selected.name[lang] || selected.name.zh}</Text>
-              {selected.element ? <Text style={styles.detailMeta}>{t.element}: {selected.element}</Text> : null}
-              {selected.astrology ? <Text style={styles.detailMeta}>{t.astrology}: {selected.astrology}</Text> : null}
+              {(selected.element || selected.astrology) ? (
+                <View style={styles.detailMetaRow}>
+                  {selected.element && ELEMENT_ICON[selected.element] ? (
+                    <View style={[styles.detailMetaBadge, { backgroundColor: ELEMENT_ICON[selected.element].color + '18', borderColor: ELEMENT_ICON[selected.element].color + '50' }]}>
+                      <Text style={styles.detailMetaEmoji}>{ELEMENT_ICON[selected.element].emoji}</Text>
+                      <View>
+                        <Text style={styles.detailMetaLabel}>{t.element}</Text>
+                        <Text style={[styles.detailMetaValue, { color: ELEMENT_ICON[selected.element].color }]}>{selected.element}</Text>
+                      </View>
+                    </View>
+                  ) : null}
+                  {selected.astrology ? (
+                    <View style={[styles.detailMetaBadge, { backgroundColor: COLORS.GOLD + '12', borderColor: COLORS.GOLD + '40' }]}>
+                      <Text style={styles.detailMetaEmoji}>{ASTRO_ICON[selected.astrology] || '✦'}</Text>
+                      <View>
+                        <Text style={styles.detailMetaLabel}>{t.astrology}</Text>
+                        <Text style={[styles.detailMetaValue, { color: COLORS.GOLD }]}>{selected.astrology}</Text>
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
 
               <View style={styles.meaningBlock}>
                 <Text style={styles.meaningLabel}>▲ {t.upright}</Text>
@@ -122,6 +175,10 @@ const styles = StyleSheet.create({
   cardInfo: { flex: 1 },
   cardName: { fontSize: 17, fontWeight: '600', color: COLORS.TEXT_PRIMARY },
   cardKeywords: { fontSize: 14, color: COLORS.GOLD, marginTop: 3 },
+  cardMetaRow: { flexDirection: 'row', gap: 6, marginTop: 4, flexWrap: 'wrap' },
+  metaBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 8, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
+  metaIcon: { fontSize: 12 },
+  metaText: { fontSize: 11, fontWeight: '600' },
   cardSummary: { fontSize: 13, color: COLORS.TEXT_MUTED, marginTop: 4, lineHeight: 19 },
   cardArrow: { color: COLORS.TEXT_MUTED, fontSize: 22 },
   modal: { flex: 1, backgroundColor: COLORS.BG_PAGE },
@@ -130,7 +187,11 @@ const styles = StyleSheet.create({
   closeBtnText: { color: COLORS.TEXT_MUTED, fontSize: 18 },
   modalCardImg: { marginVertical: 20, borderRadius: 12 },
   detailName: { fontSize: 26, fontWeight: '800', color: COLORS.GOLD, marginBottom: 8 },
-  detailMeta: { fontSize: 15, color: COLORS.TEXT_SECONDARY, marginBottom: 4 },
+  detailMetaRow: { flexDirection: 'row', gap: 10, marginBottom: 16, flexWrap: 'wrap' },
+  detailMetaBadge: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
+  detailMetaEmoji: { fontSize: 24 },
+  detailMetaLabel: { fontSize: 12, color: COLORS.TEXT_MUTED, marginBottom: 1 },
+  detailMetaValue: { fontSize: 16, fontWeight: '700' },
   meaningBlock: { width: '100%', backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 16, marginTop: 16, borderWidth: 1, borderColor: COLORS.BORDER_GOLD },
   reversedBlock: { borderColor: COLORS.BORDER },
   meaningLabel: { fontSize: 14, fontWeight: '700', color: COLORS.GOLD, letterSpacing: 1, marginBottom: 10 },
