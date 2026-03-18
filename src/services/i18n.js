@@ -113,11 +113,25 @@ const texts = {
     narrative:     '整体叙事',
     caution:       '注意事项',
 
+    // UI labels
+    viewDetail:     '查看详情 →',
+    interpreting:   '正在解读...',
+    resetReading:   '重新占卜',
+    cardUnit:       '张',
+    loadingSubtext: '星象正在汇聚，请稍候...',
+    voiceInput:     '🎤 语音输入',
+    recordStop:     '⏹ 停止录音',
+    transcribing:   '⏳ 识别中...',
+
     // Errors
     errorNoQuestion: '请先输入你的问题',
     errorApiKey: 'API 密钥未配置',
     errorNetwork: '网络请求失败，请重试',
     errorParse: '解读数据格式错误',
+    errorTranscription: '识别失败，请重试',
+    errorTranscriptionFail: '识别出错: ',
+    errorMicrophone: '麦克风访问失败: ',
+    errorRecording: '录音失败: ',
 
     // AI Prompt
     buildPrompt: (question, cards, style, tone) => {
@@ -224,8 +238,14 @@ ${cardsDesc}
     cardReading: 'Card Reading', overallMessage: 'Overall Message', energyTheme: 'Energy Theme',
     saveReading: 'Save Reading', poweredBy: 'Interpreted by {model}',
     connections: 'Card Connections', narrative: 'Story', caution: 'Caution',
+    viewDetail: 'View Details →', interpreting: 'Interpreting...', resetReading: 'New Reading',
+    cardUnit: 'cards', loadingSubtext: 'The stars are aligning, please wait...',
+    voiceInput: '🎤 Voice Input', recordStop: '⏹ Stop Recording', transcribing: '⏳ Transcribing...',
     errorNoQuestion: 'Please enter your question', errorApiKey: 'API key not configured',
     errorNetwork: 'Network error, please try again', errorParse: 'Response format error',
+    errorTranscription: 'Recognition failed, please retry',
+    errorTranscriptionFail: 'Recognition error: ', errorMicrophone: 'Microphone access failed: ',
+    errorRecording: 'Recording failed: ',
 
     buildPrompt: (question, cards, style, tone) => {
       const styleGuide = { mystical: 'Use mystical, poetic language', psychological: 'Use Jungian psychology and archetypes', practical: 'Be direct and practical' }[style] || 'Use mystical language';
@@ -280,8 +300,14 @@ ${cardsDesc}
     cardReading: 'カード解釈', overallMessage: '総合メッセージ', energyTheme: 'エネルギーテーマ',
     saveReading: '記録を保存', poweredBy: '{model} による解釈',
     connections: 'カード間の関連', narrative: 'ストーリー', caution: '注意事項',
+    viewDetail: '詳細を見る →', interpreting: '解釈中...', resetReading: 'もう一度占う',
+    cardUnit: '枚', loadingSubtext: '星が集まっています、少々お待ちください...',
+    voiceInput: '🎤 音声入力', recordStop: '⏹ 録音停止', transcribing: '⏳ 認識中...',
     errorNoQuestion: '質問を入力してください', errorApiKey: 'APIキーが未設定です',
     errorNetwork: 'ネットワークエラー', errorParse: 'レスポンス形式エラー',
+    errorTranscription: '認識に失敗しました、再試行してください',
+    errorTranscriptionFail: '認識エラー: ', errorMicrophone: 'マイクアクセスに失敗: ',
+    errorRecording: '録音に失敗: ',
 
     buildPrompt: (question, cards, style, tone) => {
       const styleGuide = { mystical: '神秘的で詩的な言葉で', psychological: 'ユング心理学とアーキタイプの視点で', practical: '具体的で実践的なアドバイスを' }[style] || '神秘的な言葉で';

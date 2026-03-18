@@ -237,9 +237,9 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
             });
             const text = await transcribeAudio(base64, rawMime);
             if (text) setQuestion(text);
-            else alert('识别失败，请重试');
+            else alert(t.errorTranscription);
           } catch (e) {
-            alert('识别出错: ' + e.message);
+            alert(t.errorTranscriptionFail + e.message);
           } finally {
             setIsTranscribing(false);
           }
@@ -247,7 +247,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
         mediaRecorder.start();
         setIsRecording(true);
       } catch (e) {
-        alert('麦克风访问失败: ' + e.message);
+        alert(t.errorMicrophone + e.message);
       }
       return;
     }
@@ -259,14 +259,14 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
       try {
         await recordingRef.current.stopAndUnloadAsync();
         const uri = recordingRef.current.getURI();
-        if (!uri) throw new Error('录音文件不存在');
+        if (!uri) throw new Error('no audio file');
         const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-        if (!base64 || base64.length < 100) throw new Error('录音数据为空');
+        if (!base64 || base64.length < 100) throw new Error('empty audio data');
         const text = await transcribeAudio(base64, 'audio/aac');
         if (text) setQuestion(text);
-        else alert('识别失败，请重试');
+        else alert(t.errorTranscription);
       } catch (e) {
-        alert('识别出错: ' + e.message);
+        alert(t.errorTranscriptionFail + e.message);
       } finally {
         setIsTranscribing(false);
       }
@@ -278,7 +278,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
         recordingRef.current = recording;
         setIsRecording(true);
       } catch (e) {
-        alert('录音失败: ' + e.message);
+        alert(t.errorRecording + e.message);
       }
     }
   }
@@ -296,7 +296,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
               <View style={styles.spreadCardInner}>
                 <View style={styles.spreadCardText}>
                   <Text style={ds.spreadName}>{spread.name[lang]}</Text>
-                  <Text style={ds.spreadCount}>{spread.count} {t.cards || '张'}</Text>
+                  <Text style={ds.spreadCount}>{spread.count} {t.cardUnit}</Text>
                 </View>
                 <SpreadDiagram spreadId={spread.id} accent={isDune ? colors.GOLD : colors.PRIMARY_LIGHT} />
               </View>
@@ -329,7 +329,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
             multiline
           />
           <TouchableOpacity style={[ds.micBtn, isRecording && styles.micBtnActive]} onPress={handleMicPress} activeOpacity={0.8} disabled={isTranscribing}>
-            <Text style={ds.micIcon}>{isTranscribing ? '⏳' : isRecording ? '⏹ 停止录音' : '🎤 语音输入'}</Text>
+            <Text style={ds.micIcon}>{isTranscribing ? t.transcribing : isRecording ? t.recordStop : t.voiceInput}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={ds.primaryBtn} onPress={handleStartDraw} activeOpacity={0.8}>
             <Text style={ds.primaryBtnText}>{t.startReading}</Text>
@@ -469,7 +469,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
           <View style={styles.loadingSection}>
             <Text style={[styles.loadingOrb, { color: colors.GOLD }]}>✦</Text>
             <Text style={[styles.loadingText, { color: colors.TEXT_PRIMARY }]}>{t.readingLoading}</Text>
-            <Text style={[styles.loadingSubtext, { color: colors.TEXT_MUTED }]}>星象正在汇聚，请稍候...</Text>
+            <Text style={[styles.loadingSubtext, { color: colors.TEXT_MUTED }]}>{t.loadingSubtext}</Text>
             <TypewriterLine streamingText={streamingText} />
           </View>
         ) : result ? (
@@ -525,7 +525,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
             ) : null}
 
             <TouchableOpacity style={ds.resetBtn} onPress={reset} activeOpacity={0.8}>
-              <Text style={ds.resetBtnText}>重新占卜</Text>
+              <Text style={ds.resetBtnText}>{t.resetReading}</Text>
             </TouchableOpacity>
           </>
         ) : null}

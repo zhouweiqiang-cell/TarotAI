@@ -127,7 +127,7 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
                   {item.question ? <Text style={ds.historyQuestion}>{item.question}</Text> : null}
                   <Text style={ds.historyMessage} numberOfLines={3}>{item.result?.overallMessage}</Text>
                   <View style={styles.historyFooter}>
-                    <Text style={ds.historyTap}>{t.viewDetail || '查看详情 →'}</Text>
+                    <Text style={ds.historyTap}>{t.viewDetail}</Text>
                     <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDelete(item.id); }}>
                       <Text style={ds.deleteBtn}>{t.delete}</Text>
                     </TouchableOpacity>
@@ -175,7 +175,7 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
                 {/* Connections */}
                 {selectedReading.result?.connections ? (
                   <View style={ds.detailSectionCard}>
-                    <Text style={ds.detailSectionLabel}>{t.connections || '牌间关联'}</Text>
+                    <Text style={ds.detailSectionLabel}>{t.connections}</Text>
                     <Text style={ds.detailSectionText}>{selectedReading.result.connections}</Text>
                   </View>
                 ) : null}
@@ -183,14 +183,14 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
                 {/* Narrative */}
                 {selectedReading.result?.narrative ? (
                   <View style={ds.detailSectionCard}>
-                    <Text style={ds.detailSectionLabel}>{t.narrative || '整体叙事'}</Text>
+                    <Text style={ds.detailSectionLabel}>{t.narrative}</Text>
                     <Text style={ds.detailSectionText}>{selectedReading.result.narrative}</Text>
                   </View>
                 ) : null}
 
                 {/* Overall */}
                 <View style={ds.detailOverallCard}>
-                  <Text style={ds.detailOverallLabel}>{t.overallMessage || '综合建议'}</Text>
+                  <Text style={ds.detailOverallLabel}>{t.overallMessage}</Text>
                   <Text style={ds.detailOverallText}>{selectedReading.result?.overallMessage}</Text>
                   {selectedReading.result?.advice ? <Text style={ds.detailAdviceText}>{selectedReading.result.advice}</Text> : null}
                 </View>
@@ -198,7 +198,7 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
                 {/* Caution */}
                 {selectedReading.result?.caution ? (
                   <View style={ds.detailCautionCard}>
-                    <Text style={ds.detailCautionLabel}>{t.caution || '注意事项'}</Text>
+                    <Text style={ds.detailCautionLabel}>{t.caution}</Text>
                     <Text style={ds.detailCautionText}>{selectedReading.result.caution}</Text>
                   </View>
                 ) : null}
@@ -237,7 +237,7 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
                   onComplete={onAnimComplete}
                 />
                 {animDone && loading && (
-                  <Text style={ds.interpretingText}>{'✦ ' + (t.interpreting || '正在解读...')}</Text>
+                  <Text style={ds.interpretingText}>{'✦ ' + t.interpreting}</Text>
                 )}
               </>
             )}
@@ -267,7 +267,7 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
             <Text style={ds.overallMessage}>{todayReading.result?.overallMessage}</Text>
             <Text style={ds.advice}>{todayReading.result?.advice}</Text>
             <TouchableOpacity style={ds.redrawBtn} onPress={handleRedraw} activeOpacity={0.8}>
-              <Text style={ds.redrawBtnText}>{t.redraw || '重新抽牌'}</Text>
+              <Text style={ds.redrawBtnText}>{t.redraw}</Text>
             </TouchableOpacity>
           </View>
         )}
