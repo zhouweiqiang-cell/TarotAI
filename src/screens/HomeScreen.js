@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Modal } from 'react-native';
 import { getTexts } from '../services/i18n';
 import { getSettings } from '../services/settingsStorage';
@@ -10,6 +10,7 @@ import TarotCardImage from '../components/TarotCardImage';
 import EnergyTagRow from '../components/EnergyTagRow';
 import CardReadingBlock from '../components/CardReadingBlock';
 import TypewriterLine from '../components/TypewriterLine';
+import CardDrawAnimation from '../components/CardDrawAnimation';
 import DuneBackground from '../components/DuneBackground';
 
 export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryOnly = false, onNavigate }) {
@@ -39,19 +40,39 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
     }
   }
 
+  const [animating, setAnimating] = useState(false);
+  const [animDone, setAnimDone] = useState(false);
+
   function handleRedraw() {
     setTodayReading(null);
     setTodayCard(null);
     setStreamingText('');
+    setAnimating(false);
+    setAnimDone(false);
+    setLoading(false);
   }
 
   async function handleDailyDraw() {
-    setLoading(true);
-
     const settings = await getSettings();
     const [drawn] = drawRandom(1);
     setTodayCard(drawn);
+    setAnimating(true);
+    setAnimDone(false);
+
+    // Wait for the animation to complete (CardDrawAnimation calls onComplete)
+    // Meanwhile, we can start the AI request in parallel after a short delay
     const cards = [{ ...drawn, position: t.cardReading }];
+
+    // Store settings for use in onAnimComplete
+    drawnRef.current = { drawn, cards, settings };
+  }
+
+  const drawnRef = useRef(null);
+
+  async function onAnimComplete() {
+    setAnimDone(true);
+    setLoading(true);
+    const { drawn, cards, settings } = drawnRef.current;
 
     try {
       const result = await analyzeSpreadStream(
@@ -198,18 +219,33 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
 
         {!todayReading ? (
           <View style={styles.drawSection}>
-            {!loading && <TarotCardImage showBack width={120} height={200} theme={theme} />}
-            {loading && todayCard && (
-              <TarotCardImage card={todayCard.card} isReversed={todayCard.isReversed} width={120} height={200} theme={theme} />
+            {/* Before draw: show card back + draw button */}
+            {!animating && (
+              <>
+                <TarotCardImage showBack width={120} height={200} theme={theme} />
+                <TouchableOpacity style={ds.drawBtn} onPress={handleDailyDraw} activeOpacity={0.8}>
+                  <Text style={ds.drawBtnText}>{t.dailyDraw}</Text>
+                </TouchableOpacity>
+              </>
             )}
-            <TouchableOpacity
-              style={[ds.drawBtn, loading && styles.drawBtnDisabled]}
-              onPress={handleDailyDraw}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Text style={ds.drawBtnText}>{loading ? '✦ 正在解读...' : t.dailyDraw}</Text>
-            </TouchableOpacity>
+            {/* During draw: shuffle → flip → land animation */}
+            {animating && !animDone && todayCard && (
+              <CardDrawAnimation
+                card={todayCard.card}
+                isReversed={todayCard.isReversed}
+                onComplete={onAnimComplete}
+                theme={theme}
+              />
+            )}
+            {/* After animation: show the landed card + AI reading */}
+            {animDone && todayCard && (
+              <>
+                <TarotCardImage card={todayCard.card} isReversed={todayCard.isReversed} width={100} height={160} theme={theme} />
+                {loading && (
+                  <Text style={ds.drawBtnText}>{'✦ ' + (t.interpreting || '正在解读...')}</Text>
+                )}
+              </>
+            )}
             {loading && streamingText ? (
               <TypewriterLine streamingText={streamingText} colors={colors} />
             ) : null}
