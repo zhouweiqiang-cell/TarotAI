@@ -277,17 +277,15 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   // ─── Step: Reading Result ───
   return (
     <SafeAreaView style={styles.safe}>
+      {loading && <NebulaBackground />}
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.pageTitle}>{t.cardReading}</Text>
         {loading ? (
-          <>
-            <NebulaBackground />
-            <View style={styles.loadingSection}>
-              <Text style={styles.loadingOrb}>✦</Text>
-              <Text style={styles.loadingText}>{t.readingLoading}</Text>
-              <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>
-            </View>
-          </>
+          <View style={styles.loadingSection}>
+            <Text style={styles.loadingOrb}>✦</Text>
+            <Text style={styles.loadingText}>{t.readingLoading}</Text>
+            <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>
+          </View>
         ) : result ? (
           <>
             {/* Energy tags */}
