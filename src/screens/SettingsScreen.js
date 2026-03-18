@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Lay
 import { getSettings, saveSettings } from '../services/settingsStorage';
 import { getTexts, LANGUAGE_OPTIONS } from '../services/i18n';
 import { getColors } from '../constants/theme';
+import DuneBackground from '../components/DuneBackground';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -144,6 +145,7 @@ export default function SettingsScreen({ lang: propLang = 'zh', theme = 'cosmic'
 
   return (
     <SafeAreaView style={styles.safe}>
+      {selectedTheme === 'dune' && <DuneBackground />}
       <ScrollView style={styles.container}>
         <Text style={styles.title}>{t.settingsTitle}</Text>
 

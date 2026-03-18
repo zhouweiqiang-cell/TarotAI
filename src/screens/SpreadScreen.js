@@ -14,6 +14,7 @@ import TarotCardImage from '../components/TarotCardImage';
 import FlipCard from '../components/FlipCard';
 import MatrixRain from '../components/MatrixRain';
 import NebulaBackground from '../components/NebulaBackground';
+import DuneBackground from '../components/DuneBackground';
 import EnergyTagRow from '../components/EnergyTagRow';
 import CardReadingBlock from '../components/CardReadingBlock';
 
@@ -269,6 +270,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
   if (step === 'select') {
     return (
       <SafeAreaView style={ds.safe}>
+        {theme === 'dune' && <DuneBackground />}
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
           <Text style={ds.pageTitle}>{t.spreadTitle}</Text>
           {Object.values(SPREADS).map(spread => (
@@ -293,6 +295,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
   if (step === 'question') {
     return (
       <SafeAreaView style={ds.safe}>
+        {theme === 'dune' && <DuneBackground />}
         <View style={styles.content}>
           <TouchableOpacity onPress={() => setStep('select')}><Text style={ds.backBtn}>← {selectedSpread.name[lang]}</Text></TouchableOpacity>
           <Text style={ds.pageTitle}>{t.spreadQuestion}</Text>
@@ -352,6 +355,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
 
     return (
       <SafeAreaView style={ds.safe}>
+        {theme === 'dune' && <DuneBackground />}
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
           <Text style={ds.pageTitle}>{selectedSpread.name[lang]}</Text>
           <Text style={ds.subtitle}>{allRevealed ? t.readingLoading : t.drawCard}</Text>
@@ -415,6 +419,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
   // ─── Step: Reading Result ───
   return (
     <SafeAreaView style={ds.safe}>
+      {theme === 'dune' && <DuneBackground />}
       {loading && (theme === 'dune'
         ? <MatrixRain streamingText={streamingText} colors={colors} />
         : <NebulaBackground />

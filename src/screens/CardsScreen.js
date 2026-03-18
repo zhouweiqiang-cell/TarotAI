@@ -5,6 +5,7 @@ import { getTexts } from '../services/i18n';
 import { getColors } from '../constants/theme';
 import { getSuitColor } from '../utils/cardUtils';
 import TarotCardImage from '../components/TarotCardImage';
+import DuneBackground from '../components/DuneBackground';
 
 const FILTER_SUITS = ['all', 'major', 'wands', 'cups', 'swords', 'pentacles'];
 
@@ -52,6 +53,7 @@ export default function CardsScreen({ lang = 'zh', theme = 'cosmic' }) {
 
   return (
     <SafeAreaView style={ds.safe}>
+      {theme === 'dune' && <DuneBackground />}
       <View style={styles.header}>
         <Text style={ds.pageTitle}>{t.cardsTitle}</Text>
         <TextInput

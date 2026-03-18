@@ -10,6 +10,7 @@ import { extractStreamingReadable } from '../utils/streamingParser';
 import TarotCardImage from '../components/TarotCardImage';
 import EnergyTagRow from '../components/EnergyTagRow';
 import CardReadingBlock from '../components/CardReadingBlock';
+import DuneBackground from '../components/DuneBackground';
 
 export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryOnly = false, onNavigate }) {
   const t = getTexts(lang);
@@ -83,6 +84,7 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
   if (showHistoryOnly) {
     return (
       <SafeAreaView style={ds.safe}>
+        {theme === 'dune' && <DuneBackground />}
         <ScrollView style={styles.container}>
           <Text style={[ds.pageTitle, { padding: 20, paddingBottom: 0 }]}>{t.historyTitle}</Text>
           <View style={{ padding: 20 }}>
@@ -184,6 +186,7 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
 
   return (
     <SafeAreaView style={ds.safe}>
+      {theme === 'dune' && <DuneBackground />}
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={ds.pageTitle}>{t.dailyTitle}</Text>
         <Text style={ds.subtitle}>{t.dailySubtitle}</Text>

@@ -12,7 +12,6 @@ import HomeScreen    from './src/screens/HomeScreen';
 import SpreadScreen  from './src/screens/SpreadScreen';
 import CardsScreen   from './src/screens/CardsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import DuneBackground from './src/components/DuneBackground';
 
 // ─── Tab Icon components ───────────────────────────────
 const SunIcon    = ({ color }) => <Text style={{ fontSize: 22, color }}>☀️</Text>;
@@ -55,8 +54,8 @@ export default function App() {
   const colors = useMemo(() => getColors(theme), [theme]);
 
   const styles = useMemo(() => StyleSheet.create({
-    root: { flex: 1, backgroundColor: colors.BG_DEEP, position: 'relative' },
-    screenContainer: { flex: 1, backgroundColor: 'transparent' },
+    root: { flex: 1, backgroundColor: colors.BG_DEEP },
+    screenContainer: { flex: 1 },
     tabBar: {
       flexDirection: 'row', backgroundColor: colors.BG_CARD,
       borderTopWidth: 1, borderTopColor: colors.BORDER,
@@ -77,8 +76,6 @@ export default function App() {
   return (
     <RootView style={styles.root}>
       <StatusBar style="light" />
-      {theme === 'dune' && <DuneBackground />}
-
       <View style={styles.screenContainer}>
         {activeTab === 'home' && (
           <HomeScreen lang={lang} theme={theme} onNavigate={switchTab} />
