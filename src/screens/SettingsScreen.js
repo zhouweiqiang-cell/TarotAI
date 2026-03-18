@@ -5,12 +5,12 @@ import { getTexts, LANGUAGE_OPTIONS } from '../services/i18n';
 import { COLORS } from '../constants/theme';
 
 const MODEL_OPTIONS = [
-  { id: 'gemini-3.1-pro-preview',      icon: '🧠' },
-  { id: 'gemini-3-flash-preview',       icon: '✨' },
-  { id: 'gemini-2.5-flash',            icon: '🎯' },
-  { id: 'gemini-3.1-flash-lite-preview', icon: '⚡' },
-  { id: 'qwen-vl-max',                 icon: '🔮' },
-  { id: 'glm-4v-flash',                icon: '🌟' },
+  { id: 'gemini-2.5-pro',      icon: '🧠' },
+  { id: 'gemini-2.5-flash',    icon: '✨' },
+  { id: 'gemini-2.0-flash',    icon: '⚡' },
+  { id: 'gemini-2.0-flash-lite', icon: '🎯' },
+  { id: 'qwen-vl-max',         icon: '🔮' },
+  { id: 'glm-4v-flash',        icon: '🌟' },
 ];
 
 const STYLE_OPTIONS = [
@@ -20,7 +20,7 @@ const STYLE_OPTIONS = [
 ];
 
 export default function SettingsScreen({ lang: propLang = 'zh', onLangChange }) {
-  const [selectedModel, setSelectedModel] = useState('gemini-3.1-flash-lite-preview');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.0-flash');
   const [selectedLang, setSelectedLang] = useState(propLang);
   const [selectedStyle, setSelectedStyle] = useState('mystical');
   const t = getTexts(selectedLang);
@@ -35,10 +35,10 @@ export default function SettingsScreen({ lang: propLang = 'zh', onLangChange }) 
   }, [propLang]);
 
   const modelTexts = {
-    'gemini-3.1-pro-preview':      { name: t.modelPro,      desc: t.modelProDesc },
-    'gemini-3-flash-preview':       { name: t.modelBalanced,  desc: t.modelBalancedDesc },
-    'gemini-2.5-flash':            { name: t.modelAccurate,  desc: t.modelAccurateDesc },
-    'gemini-3.1-flash-lite-preview': { name: t.modelFast,    desc: t.modelFastDesc },
+    'gemini-2.5-pro':       { name: t.modelPro,       desc: t.modelProDesc },
+    'gemini-2.5-flash':     { name: t.modelBalanced,  desc: t.modelBalancedDesc },
+    'gemini-2.0-flash':     { name: t.modelAccurate,  desc: t.modelAccurateDesc },
+    'gemini-2.0-flash-lite': { name: t.modelFast,     desc: t.modelFastDesc },
     'qwen-vl-max':                 { name: t.modelQwen,      desc: t.modelQwenDesc },
     'glm-4v-flash':                { name: t.modelGlm,       desc: t.modelGlmDesc },
   };

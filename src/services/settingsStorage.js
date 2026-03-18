@@ -3,15 +3,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const SETTINGS_KEY = 'tarotai_settings';
 
 const DEFAULT_SETTINGS = {
-  model: 'gemini-3.1-flash-lite-preview',
+  model: 'gemini-2.0-flash',
   language: 'zh',
   style: 'mystical', // 'mystical' | 'psychological' | 'practical'
 };
 
+const VALID_MODELS = new Set([
+  'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite',
+  'qwen-vl-max', 'glm-4v-flash',
+]);
+
 export async function getSettings() {
   try {
     const json = await AsyncStorage.getItem(SETTINGS_KEY);
-    return json ? { ...DEFAULT_SETTINGS, ...JSON.parse(json) } : DEFAULT_SETTINGS;
+    if (!json) return DEFAULT_SETTINGS;
+    const stored = JSON.parse(json);
+    // migrate stale/invalid model IDs
+    if (stored.model && !VALID_MODELS.has(stored.model)) {
+      stored.model = DEFAULT_SETTINGS.model;
+      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(stored));
+    }
+    return { ...DEFAULT_SETTINGS, ...stored };
   } catch {
     return DEFAULT_SETTINGS;
   }
