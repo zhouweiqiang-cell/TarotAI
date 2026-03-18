@@ -327,15 +327,13 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
                   {renderCardSlot(4, 70, 110)}
                   <View style={styles.celticEmpty} />
                 </View>
-                {/* Row 2: Past - Present/Challenge - Future */}
+                {/* Row 2: Past - Present+Challenge - Future */}
                 <View style={styles.celticRow}>
                   {renderCardSlot(3, 70, 110)}
-                  <View style={styles.celticCenter}>
+                  <View style={styles.celticCenterCol}>
                     {renderCardSlot(0, 70, 110)}
-                    {/* Challenge card overlaid rotated */}
-                    <View style={styles.celticCrossCard}>
-                      {renderCardSlot(1, 70, 110, { transform: [{ rotate: '90deg' }] })}
-                    </View>
+                    {/* Challenge card below, slightly rotated to show "crossing" */}
+                    {renderCardSlot(1, 70, 110, { transform: [{ rotate: '12deg' }], marginTop: -16 })}
                   </View>
                   {renderCardSlot(5, 70, 110)}
                 </View>
@@ -470,8 +468,7 @@ const styles = StyleSheet.create({
   celticCross: { alignItems: 'center' },
   celticRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   celticEmpty: { width: 90 },
-  celticCenter: { position: 'relative', width: 90, height: 140, alignItems: 'center', justifyContent: 'center' },
-  celticCrossCard: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+  celticCenterCol: { alignItems: 'center' },
   celticStaff: { justifyContent: 'flex-end', gap: 4 },
   cardSlot: { alignItems: 'center', width: 90 },
   revealedBadge: { marginTop: 6, borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center', width: '100%' },
