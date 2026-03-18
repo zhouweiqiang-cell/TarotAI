@@ -14,6 +14,32 @@ import NebulaBackground from '../components/NebulaBackground';
 
 const WORKER_URL = 'https://tarot-proxy.zhouweiqiang.workers.dev/';
 
+// Extract readable text from partial streaming JSON
+function StreamingPreview({ text }) {
+  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const parts = [];
+  // Extract "reading" values
+  const readings = [...clean.matchAll(/"reading"\s*:\s*"((?:[^"\\]|\\.)*)"/g)];
+  readings.forEach(m => parts.push(m[1]));
+  // Extract partial reading being typed (unclosed string)
+  const partialReading = clean.match(/"reading"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialReading) parts.push(partialReading[1] + '...');
+  // Extract overallMessage
+  const overall = clean.match(/"overallMessage"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (overall) parts.push(overall[1]);
+  const partialOverall = !overall && clean.match(/"overallMessage"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialOverall) parts.push(partialOverall[1] + '...');
+  // Extract advice
+  const advice = clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (advice) parts.push(advice[1]);
+  const partialAdvice = !advice && clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialAdvice) parts.push(partialAdvice[1] + '...');
+
+  const display = parts.join('\n\n').replace(/\\n/g, '\n').replace(/\\"/g, '"');
+  if (!display) return <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>;
+  return <Text style={styles.streamingText}>{display}</Text>;
+}
+
 async function transcribeAudio(base64, mimeType) {
   const body = {
     contents: [{
@@ -43,6 +69,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   const [drawnCards, setDrawnCards] = useState([]);
   const [revealed, setRevealed] = useState([]);
   const [result, setResult] = useState(null);
+  const [streamingText, setStreamingText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -78,15 +105,17 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   async function handleGetReading() {
     setLoading(true);
     setResult(null);
+    setStreamingText('');
     setStep('reading');
 
     const settings = await getSettings();
     try {
       const res = await analyzeSpreadStream(
         drawnCards, question, settings.model, lang, settings.style,
-        () => {} // streaming callback — suppress raw text
+        (text) => setStreamingText(text)
       );
       setResult(res);
+      setStreamingText('');
 
       await addReading({
         id: Date.now().toString(),
@@ -287,7 +316,11 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
           <View style={styles.loadingSection}>
             <Text style={styles.loadingOrb}>✦</Text>
             <Text style={styles.loadingText}>{t.readingLoading}</Text>
-            <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>
+            {streamingText ? (
+              <StreamingPreview text={streamingText} />
+            ) : (
+              <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>
+            )}
           </View>
         ) : result ? (
           <>
@@ -383,6 +416,7 @@ const styles = StyleSheet.create({
   loadingOrb: { fontSize: 56, color: COLORS.GOLD },
   loadingText: { color: COLORS.TEXT_PRIMARY, fontSize: 19, fontWeight: '600' },
   loadingSubtext: { color: COLORS.TEXT_MUTED, fontSize: 15 },
+  streamingText: { color: COLORS.TEXT_PRIMARY, fontSize: 16, lineHeight: 26, marginTop: 16, paddingHorizontal: 8 },
   energyRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 20 },
   energyPill: { backgroundColor: COLORS.BG_CARD, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: COLORS.BORDER_GOLD },
   energyText: { color: COLORS.GOLD, fontSize: 15, fontWeight: '600' },

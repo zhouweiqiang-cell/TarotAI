@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Modal } from 'react-native';
 import { getTexts } from '../services/i18n';
 import { getSettings } from '../services/settingsStorage';
 import { getTodayReading, getHistory, addReading, removeReading } from '../services/historyStorage';
@@ -8,12 +8,32 @@ import { drawRandom, getCard, SPREADS } from '../data/cards';
 import { COLORS } from '../constants/theme';
 import TarotCardImage from '../components/TarotCardImage';
 
+function extractStreamingReadable(text) {
+  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const parts = [];
+  const readings = [...clean.matchAll(/"reading"\s*:\s*"((?:[^"\\]|\\.)*)"/g)];
+  readings.forEach(m => parts.push(m[1]));
+  const partial = clean.match(/"reading"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partial) parts.push(partial[1] + '...');
+  const overall = clean.match(/"overallMessage"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (overall) parts.push(overall[1]);
+  const partialO = !overall && clean.match(/"overallMessage"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialO) parts.push(partialO[1] + '...');
+  const advice = clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (advice) parts.push(advice[1]);
+  const partialA = !advice && clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialA) parts.push(partialA[1] + '...');
+  return parts.join('\n\n').replace(/\\n/g, '\n').replace(/\\"/g, '"') || '星象正在汇聚...';
+}
+
 export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNavigate }) {
   const t = getTexts(lang);
   const [todayCard, setTodayCard] = useState(null);   // { card, isReversed }
   const [todayReading, setTodayReading] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const [selectedReading, setSelectedReading] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -43,8 +63,9 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
     try {
       const result = await analyzeSpreadStream(
         cards, '', settings.model, lang, settings.style,
-        () => {} // suppress raw streaming text
+        (text) => setStreamingText(text)
       );
+      setStreamingText('');
 
       const reading = {
         id: Date.now().toString(),
@@ -81,21 +102,74 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
               <Text style={styles.emptyText}>{t.historyEmpty}</Text>
             ) : (
               history.map(item => (
-                <View key={item.id} style={styles.historyCard}>
+                <TouchableOpacity key={item.id} style={styles.historyCard} onPress={() => setSelectedReading(item)} activeOpacity={0.7}>
                   <View style={styles.historyHeader}>
                     <Text style={styles.historyDate}>{item.date}</Text>
                     <Text style={styles.historySpread}>{SPREADS[item.spread]?.name[lang] || item.spread}</Text>
                   </View>
                   {item.question ? <Text style={styles.historyQuestion}>{item.question}</Text> : null}
                   <Text style={styles.historyMessage} numberOfLines={3}>{item.result?.overallMessage}</Text>
-                  <TouchableOpacity onPress={() => handleDelete(item.id)}>
-                    <Text style={styles.deleteBtn}>{t.delete}</Text>
-                  </TouchableOpacity>
-                </View>
+                  <View style={styles.historyFooter}>
+                    <Text style={styles.historyTap}>{t.viewDetail || '查看详情 →'}</Text>
+                    <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDelete(item.id); }}>
+                      <Text style={styles.deleteBtn}>{t.delete}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
               ))
             )}
           </View>
         </ScrollView>
+
+        {/* Reading Detail Modal */}
+        <Modal visible={!!selectedReading} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelectedReading(null)}>
+          {selectedReading && (
+            <SafeAreaView style={styles.safe}>
+              <ScrollView contentContainerStyle={styles.detailContent}>
+                <TouchableOpacity onPress={() => setSelectedReading(null)} style={styles.detailClose}>
+                  <Text style={styles.detailCloseText}>✕</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.detailDate}>{selectedReading.date}</Text>
+                <Text style={styles.detailSpread}>{SPREADS[selectedReading.spread]?.name[lang] || selectedReading.spread}</Text>
+                {selectedReading.question ? <Text style={styles.detailQuestion}>"{selectedReading.question}"</Text> : null}
+
+                {/* Cards */}
+                {selectedReading.cards?.map((c, i) => {
+                  const card = getCard(c.cardId);
+                  const cr = selectedReading.result?.cardReadings?.[i];
+                  return (
+                    <View key={i} style={styles.detailCardRow}>
+                      {card && <TarotCardImage card={card} isReversed={c.isReversed} width={60} height={95} style={{ marginRight: 12, borderRadius: 8 }} />}
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.detailCardPos}>{c.position || cr?.position}</Text>
+                        <Text style={styles.detailCardName}>{card?.name[lang] || c.cardId}</Text>
+                        <Text style={styles.detailCardState}>{c.isReversed ? t.reversed : t.upright}</Text>
+                        {cr?.reading ? <Text style={styles.detailCardReading}>{cr.reading}</Text> : null}
+                      </View>
+                    </View>
+                  );
+                })}
+
+                {/* Energy */}
+                {selectedReading.result?.energy?.length > 0 && (
+                  <View style={styles.detailEnergyRow}>
+                    {selectedReading.result.energy.map((e, i) => (
+                      <View key={i} style={styles.energyPill}><Text style={styles.energyText}>{e}</Text></View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Overall */}
+                <View style={styles.detailOverallCard}>
+                  <Text style={styles.detailOverallLabel}>{t.overallMessage || '综合建议'}</Text>
+                  <Text style={styles.detailOverallText}>{selectedReading.result?.overallMessage}</Text>
+                  {selectedReading.result?.advice ? <Text style={styles.detailAdviceText}>{selectedReading.result.advice}</Text> : null}
+                </View>
+              </ScrollView>
+            </SafeAreaView>
+          )}
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -108,7 +182,10 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
 
         {!todayReading ? (
           <View style={styles.drawSection}>
-            <TarotCardImage showBack width={120} height={200} />
+            {!loading && <TarotCardImage showBack width={120} height={200} />}
+            {loading && todayCard && (
+              <TarotCardImage card={todayCard.card} isReversed={todayCard.isReversed} width={120} height={200} />
+            )}
             <TouchableOpacity
               style={[styles.drawBtn, loading && styles.drawBtnDisabled]}
               onPress={handleDailyDraw}
@@ -117,6 +194,11 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
             >
               <Text style={styles.drawBtnText}>{loading ? '✦ 正在解读...' : t.dailyDraw}</Text>
             </TouchableOpacity>
+            {loading && streamingText ? (
+              <Text style={styles.streamingText}>
+                {extractStreamingReadable(streamingText)}
+              </Text>
+            ) : null}
           </View>
         ) : (
           <View style={styles.resultSection}>
@@ -160,38 +242,58 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.BG_PAGE },
   container: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
-  pageTitle: { fontSize: 26, fontWeight: '800', color: COLORS.GOLD, marginBottom: 6 },
-  subtitle: { fontSize: 14, color: COLORS.TEXT_SECONDARY, marginBottom: 32 },
+  pageTitle: { fontSize: 28, fontWeight: '800', color: COLORS.GOLD, marginBottom: 6 },
+  subtitle: { fontSize: 16, color: COLORS.TEXT_SECONDARY, marginBottom: 32 },
   drawSection: { alignItems: 'center', gap: 24 },
   drawBtn: {
     backgroundColor: COLORS.GOLD, paddingHorizontal: 36, paddingVertical: 14,
     borderRadius: 30, minWidth: 200, alignItems: 'center',
   },
   drawBtnDisabled: { opacity: 0.6 },
-  drawBtnText: { color: COLORS.BG_DEEP, fontWeight: '700', fontSize: 16 },
+  drawBtnText: { color: COLORS.BG_DEEP, fontWeight: '700', fontSize: 18 },
   resultSection: { gap: 16 },
   resultCardRow: { flexDirection: 'row', gap: 16, alignItems: 'flex-start' },
   resultCardInfo: { flex: 1, gap: 6, paddingTop: 4 },
-  sectionLabel: { fontSize: 12, color: COLORS.TEXT_MUTED },
-  todayCardName: { fontSize: 20, fontWeight: '800', color: COLORS.GOLD },
-  todayCardState: { fontSize: 13, color: COLORS.TEXT_SECONDARY },
+  sectionLabel: { fontSize: 14, color: COLORS.TEXT_MUTED },
+  todayCardName: { fontSize: 22, fontWeight: '800', color: COLORS.GOLD },
+  todayCardState: { fontSize: 15, color: COLORS.TEXT_SECONDARY },
   energyRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 },
   energyPill: { backgroundColor: COLORS.BG_CARD, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.BORDER_GOLD },
-  energyText: { color: COLORS.GOLD, fontSize: 12, fontWeight: '600' },
-  overallMessage: { fontSize: 15, color: COLORS.TEXT_PRIMARY, lineHeight: 24 },
-  advice: { fontSize: 14, color: COLORS.TEXT_SECONDARY, lineHeight: 22 },
+  energyText: { color: COLORS.GOLD, fontSize: 14, fontWeight: '600' },
+  overallMessage: { fontSize: 17, color: COLORS.TEXT_PRIMARY, lineHeight: 28 },
+  advice: { fontSize: 16, color: COLORS.TEXT_SECONDARY, lineHeight: 26 },
   spreadCTA: {
     marginTop: 32, backgroundColor: COLORS.BG_CARD, borderRadius: 12,
     padding: 16, alignItems: 'center', borderWidth: 1, borderColor: COLORS.BORDER,
   },
-  spreadCTAText: { color: COLORS.PRIMARY_LIGHT, fontSize: 15, fontWeight: '600' },
+  spreadCTAText: { color: COLORS.PRIMARY_LIGHT, fontSize: 17, fontWeight: '600' },
   // History
   historyCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.BORDER },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  historyDate: { color: COLORS.TEXT_MUTED, fontSize: 12 },
-  historySpread: { color: COLORS.PRIMARY_LIGHT, fontSize: 12 },
-  historyQuestion: { color: COLORS.TEXT_SECONDARY, fontSize: 13, marginBottom: 8, fontStyle: 'italic' },
-  historyMessage: { color: COLORS.TEXT_PRIMARY, fontSize: 13, lineHeight: 20, marginBottom: 10 },
-  deleteBtn: { color: COLORS.TEXT_MUTED, fontSize: 12, textAlign: 'right' },
-  emptyText: { color: COLORS.TEXT_MUTED, textAlign: 'center', marginTop: 60, fontSize: 15 },
+  historyDate: { color: COLORS.TEXT_MUTED, fontSize: 14 },
+  historySpread: { color: COLORS.PRIMARY_LIGHT, fontSize: 14 },
+  historyQuestion: { color: COLORS.TEXT_SECONDARY, fontSize: 15, marginBottom: 8, fontStyle: 'italic' },
+  historyMessage: { color: COLORS.TEXT_PRIMARY, fontSize: 15, lineHeight: 24, marginBottom: 10 },
+  historyFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  historyTap: { color: COLORS.PRIMARY_LIGHT, fontSize: 14 },
+  deleteBtn: { color: COLORS.TEXT_MUTED, fontSize: 14 },
+  emptyText: { color: COLORS.TEXT_MUTED, textAlign: 'center', marginTop: 60, fontSize: 17 },
+  streamingText: { color: COLORS.TEXT_PRIMARY, fontSize: 16, lineHeight: 26, textAlign: 'center', marginTop: 8 },
+  // Detail Modal
+  detailContent: { padding: 24, paddingBottom: 40 },
+  detailClose: { alignSelf: 'flex-end', padding: 8 },
+  detailCloseText: { color: COLORS.TEXT_MUTED, fontSize: 20 },
+  detailDate: { fontSize: 14, color: COLORS.TEXT_MUTED, marginBottom: 4 },
+  detailSpread: { fontSize: 22, fontWeight: '800', color: COLORS.GOLD, marginBottom: 8 },
+  detailQuestion: { fontSize: 16, color: COLORS.TEXT_SECONDARY, fontStyle: 'italic', marginBottom: 20, lineHeight: 24 },
+  detailCardRow: { flexDirection: 'row', backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: COLORS.BORDER },
+  detailCardPos: { fontSize: 13, fontWeight: '700', color: COLORS.GOLD, letterSpacing: 0.5, marginBottom: 4 },
+  detailCardName: { fontSize: 17, fontWeight: '700', color: COLORS.TEXT_PRIMARY, marginBottom: 2 },
+  detailCardState: { fontSize: 14, color: COLORS.TEXT_MUTED, marginBottom: 6 },
+  detailCardReading: { fontSize: 15, color: COLORS.TEXT_PRIMARY, lineHeight: 24 },
+  detailEnergyRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginVertical: 12 },
+  detailOverallCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 18, marginTop: 8, borderWidth: 1, borderColor: COLORS.BORDER_GOLD, gap: 10 },
+  detailOverallLabel: { fontSize: 14, color: COLORS.GOLD, fontWeight: '700', letterSpacing: 1 },
+  detailOverallText: { fontSize: 17, color: COLORS.TEXT_PRIMARY, lineHeight: 28 },
+  detailAdviceText: { fontSize: 16, color: COLORS.TEXT_SECONDARY, lineHeight: 26 },
 });
