@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, Animated, TouchableOpacity, TextInput, ScrollView, StyleSheet, SafeAreaView, Platform } from 'react-native';
+import Svg, { Rect, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
 import { getTexts } from '../services/i18n';
@@ -21,6 +22,88 @@ import CardReadingBlock from '../components/CardReadingBlock';
 import TypewriterLine from '../components/TypewriterLine';
 
 const WORKER_URL = 'https://tarot-proxy.zhouweiqiang.workers.dev/';
+
+// ─── Mini card rect for spread diagrams ───
+const CW = 14, CH = 20, CR = 2;
+function MiniCard({ x, y, accent, rotate }) {
+  const props = { x, y, width: CW, height: CH, rx: CR, fill: accent, fillOpacity: 0.3, stroke: accent, strokeOpacity: 0.6, strokeWidth: 0.8 };
+  if (rotate) {
+    const cx = x + CW / 2, cy = y + CH / 2;
+    return <Rect {...props} transform={`rotate(${rotate}, ${cx}, ${cy})`} fillOpacity={0.2} />;
+  }
+  return <Rect {...props} />;
+}
+
+function SpreadDiagram({ spreadId, accent }) {
+  switch (spreadId) {
+    case 'single':
+      return (
+        <Svg width={50} height={36} viewBox="0 0 50 36">
+          <MiniCard x={18} y={8} accent={accent} />
+        </Svg>
+      );
+    case 'three_card':
+      return (
+        <Svg width={80} height={36} viewBox="0 0 80 36">
+          <MiniCard x={5} y={8} accent={accent} />
+          <MiniCard x={33} y={8} accent={accent} />
+          <MiniCard x={61} y={8} accent={accent} />
+        </Svg>
+      );
+    case 'five_card':
+      return (
+        <Svg width={90} height={60} viewBox="0 0 90 60">
+          <MiniCard x={38} y={1} accent={accent} />
+          <MiniCard x={10} y={20} accent={accent} />
+          <MiniCard x={66} y={20} accent={accent} />
+          <MiniCard x={24} y={38} accent={accent} />
+          <MiniCard x={52} y={38} accent={accent} />
+        </Svg>
+      );
+    case 'celtic_cross': {
+      const s = 10, h = 14, r = 1.5; // smaller cards for 10-card
+      const mc = (x, y, rot) => {
+        const p = { x, y, width: s, height: h, rx: r, fill: accent, fillOpacity: 0.3, stroke: accent, strokeOpacity: 0.6, strokeWidth: 0.6 };
+        if (rot) { const cx = x + s / 2, cy = y + h / 2; return <Rect {...p} transform={`rotate(${rot}, ${cx}, ${cy})`} fillOpacity={0.2} />; }
+        return <Rect {...p} />;
+      };
+      // Cross: center (30,28), Challenge rotated on top
+      // Staff: x=72, 4 cards bottom-to-top
+      return (
+        <Svg width={100} height={72} viewBox="0 0 100 72">
+          {mc(30, 28)}
+          {mc(30, 28, 90)}
+          {mc(30, 8)}
+          {mc(30, 48)}
+          {mc(12, 28)}
+          {mc(48, 28)}
+          {mc(72, 54)}
+          {mc(72, 38)}
+          {mc(72, 22)}
+          {mc(72, 6)}
+        </Svg>
+      );
+    }
+    default: return null;
+  }
+}
+
+function CardGlow({ colors, isDune }) {
+  const glowColor = isDune ? colors.GOLD : colors.PRIMARY;
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Svg width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+        <Defs>
+          <RadialGradient id="glow" cx="50%" cy="50%" r="60%">
+            <Stop offset="0%" stopColor={glowColor} stopOpacity={isDune ? 0.12 : 0.1} />
+            <Stop offset="100%" stopColor={glowColor} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#glow)" />
+      </Svg>
+    </View>
+  );
+}
 
 async function transcribeAudio(base64, mimeType) {
   const body = {
@@ -208,10 +291,14 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
           <Text style={ds.pageTitle}>{t.spreadTitle}</Text>
           {Object.values(SPREADS).map(spread => (
-            <TouchableOpacity key={spread.id} style={ds.spreadCard} onPress={() => handleSelectSpread(spread)} activeOpacity={0.8}>
+            <TouchableOpacity key={spread.id} style={[ds.spreadCard, styles.spreadCardOverflow]} onPress={() => handleSelectSpread(spread)} activeOpacity={0.8}>
+              <CardGlow colors={colors} isDune={isDune} />
               <View style={styles.spreadCardInner}>
-                <Text style={ds.spreadName}>{spread.name[lang]}</Text>
-                <Text style={ds.spreadCount}>{spread.count} 张</Text>
+                <View style={styles.spreadCardText}>
+                  <Text style={ds.spreadName}>{spread.name[lang]}</Text>
+                  <Text style={ds.spreadCount}>{spread.count} {t.cards || '张'}</Text>
+                </View>
+                <SpreadDiagram spreadId={spread.id} accent={isDune ? colors.GOLD : colors.PRIMARY_LIGHT} />
               </View>
               <View style={styles.positionPills}>
                 {spread.positions.map((p, i) => (
@@ -433,7 +520,9 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
+  spreadCardOverflow: { overflow: 'hidden' },
   spreadCardInner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  spreadCardText: { flex: 1 },
   positionPills: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   cardsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
   celticContainer: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
