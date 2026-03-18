@@ -3,12 +3,12 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { extractStreamingReadable } from '../utils/streamingParser';
 import { useTheme } from '../contexts/ThemeContext';
 
-const WINDOW = 30;
+const MAX_CHARS = 120;
 const TICK = 18;
 
 export default function TypewriterLine({ streamingText }) {
   const { colors } = useTheme();
-  const [line, setLine] = useState('');
+  const [text, setText] = useState('');
   const pointerRef = useRef(0);
   const sourceRef = useRef('');
 
@@ -33,19 +33,19 @@ export default function TypewriterLine({ streamingText }) {
 
       pointerRef.current++;
       const idx = pointerRef.current;
-      const windowStart = Math.max(0, idx - WINDOW);
-      setLine(src.slice(windowStart, idx));
+      const windowStart = Math.max(0, idx - MAX_CHARS);
+      setText(src.slice(windowStart, idx));
     }, TICK);
 
     return () => clearInterval(interval);
   }, []);
 
-  if (!line) return null;
+  if (!text) return null;
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.text, { color: colors.GOLD }]} numberOfLines={1}>
-        {line}
+      <Text style={[styles.text, { color: colors.GOLD }]} numberOfLines={5}>
+        {text}
         <Text style={styles.cursor}>▎</Text>
       </Text>
     </View>
@@ -53,7 +53,7 @@ export default function TypewriterLine({ streamingText }) {
 }
 
 const styles = StyleSheet.create({
-  container: { marginTop: 24, paddingHorizontal: 16, alignItems: 'center' },
-  text: { fontSize: 16, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', lineHeight: 24, textAlign: 'center' },
+  container: { marginTop: 24, paddingHorizontal: 16, alignItems: 'center', minHeight: 120 },
+  text: { fontSize: 15, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', lineHeight: 24, textAlign: 'center' },
   cursor: { opacity: 0.4 },
 });
