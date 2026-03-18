@@ -377,7 +377,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
     return (
       <SafeAreaView style={ds.safe}>
         {isDune && <DuneBackground />}
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView style={styles.container} contentContainerStyle={[styles.content, !isCeltic && styles.drawContentCenter]}>
           <Text style={ds.pageTitle}>{selectedSpread.name[lang]}</Text>
           <Text style={ds.subtitle}>{allRevealed ? t.readingLoading : t.drawCard}</Text>
 
@@ -539,6 +539,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
+  drawContentCenter: { flexGrow: 1, justifyContent: 'center' },
   spreadCardOverflow: { overflow: 'hidden' },
   spreadCardInner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   spreadCardText: { flex: 1 },
@@ -546,7 +547,7 @@ const styles = StyleSheet.create({
   cardsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
   fiveCardLayout: { alignItems: 'center', gap: 8 },
   fiveCardRow: { flexDirection: 'row', justifyContent: 'center', gap: 16 },
-  fiveCardRowWide: { flexDirection: 'row', justifyContent: 'center', gap: 80 },
+  fiveCardRowWide: { flexDirection: 'row', justifyContent: 'center', gap: 100 },
   celticContainer: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
   celticCross: { alignItems: 'center' },
   celticRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
