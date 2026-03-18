@@ -113,9 +113,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
     if (Platform.OS === 'web') {
       // Web: use native SpeechRecognition — no API call needed
       if (isRecording && mediaRecorderRef.current) {
-        mediaRecorderRef.current.abort();
-        mediaRecorderRef.current = null;
-        setIsRecording(false);
+        mediaRecorderRef.current.stop();
         return;
       }
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
