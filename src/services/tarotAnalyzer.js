@@ -1,12 +1,13 @@
 import { getTexts } from './i18n';
 
 // ═══════════════════════════════════════════
-// API Keys
+// Cloudflare Worker proxy — Gemini key 存在 Worker 里，源码不含任何 key
 // ═══════════════════════════════════════════
+const WORKER_URL = 'https://tarot-proxy.zhouweiqiang.workers.dev/';
+
 const API_KEYS = {
-  gemini: 'AIzaSyCza0BpJAOgjfjgHiPEizHey1V9vB9RBdI',
-  qwen:   'YOUR_DASHSCOPE_API_KEY',
-  glm:    'YOUR_ZHIPUAI_API_KEY',
+  qwen: 'YOUR_DASHSCOPE_API_KEY',
+  glm:  'YOUR_ZHIPUAI_API_KEY',
 };
 
 // ═══════════════════════════════════════════
@@ -19,11 +20,10 @@ function getProvider(model) {
 }
 
 // ═══════════════════════════════════════════
-// Gemini
+// Gemini — 全部走 Worker
 // ═══════════════════════════════════════════
 function getGeminiUrl(model, stream) {
-  const method = stream ? 'streamGenerateContent?alt=sse&' : 'generateContent?';
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:${method}key=${API_KEYS.gemini}`;
+  return `${WORKER_URL}?model=${model}&stream=${stream}`;
 }
 
 function buildGeminiBody(prompt) {

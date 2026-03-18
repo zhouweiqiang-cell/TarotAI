@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, StyleSheet, SafeAreaView, Platform } from 'react-native';
+import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
 import { getTexts } from '../services/i18n';
 import { getSettings } from '../services/settingsStorage';
 import { addReading } from '../services/historyStorage';
@@ -7,6 +9,24 @@ import { analyzeSpreadStream } from '../services/tarotAnalyzer';
 import { drawRandom, SPREADS } from '../data/cards';
 import { COLORS, SUIT_COLORS } from '../constants/theme';
 import TarotCardImage from '../components/TarotCardImage';
+
+const WORKER_URL = 'https://tarot-proxy.zhouweiqiang.workers.dev/';
+
+async function transcribeAudio(base64, mimeType) {
+  const body = {
+    contents: [{
+      parts: [{ inline_data: { mime_type: mimeType, data: base64 } }],
+    }],
+  };
+  const res = await fetch(`${WORKER_URL}?model=gemini-1.5-flash&stream=false`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || 'transcription failed');
+  return data.candidates?.[0]?.content?.parts?.find(p => p.text && !p.thought)?.text || '';
+}
 
 export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   const t = getTexts(lang);
@@ -17,6 +37,11 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   const [revealed, setRevealed] = useState([]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingRef = useRef(null);
 
   function handleSelectSpread(spread) {
     setSelectedSpread(spread);
@@ -77,6 +102,72 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
     setRevealed([]); setResult(null);
   }
 
+  async function handleMicPress() {
+    if (isTranscribing) return;
+    if (isRecording) {
+      // Stop recording
+      setIsRecording(false);
+      setIsTranscribing(true);
+      if (Platform.OS === 'web') {
+        mediaRecorderRef.current?.stop();
+      } else {
+        try {
+          await recordingRef.current.stopAndUnloadAsync();
+          const uri = recordingRef.current.getURI();
+          const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+          const text = await transcribeAudio(base64, 'audio/m4a');
+          if (text) setQuestion(text);
+          else alert('识别失败，请重试');
+        } catch (e) {
+          alert('识别出错: ' + e.message);
+        } finally {
+          setIsTranscribing(false);
+        }
+      }
+    } else {
+      // Start recording
+      try {
+        if (Platform.OS === 'web') {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mediaRecorder = new MediaRecorder(stream);
+          mediaRecorderRef.current = mediaRecorder;
+          audioChunksRef.current = [];
+          mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+          mediaRecorder.onstop = async () => {
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            const rawMime = mediaRecorder.mimeType || 'audio/webm';
+            const mimeType = rawMime.split(';')[0];
+            const blob = new Blob(audioChunksRef.current, { type: mimeType });
+            if (blob.size === 0) { setIsTranscribing(false); return; }
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = async () => {
+              try {
+                const base64 = reader.result.split(',')[1];
+                const text = await transcribeAudio(base64, mimeType);
+                if (text) setQuestion(text);
+                else alert('识别失败，请重试');
+              } catch (e) {
+                alert('识别出错: ' + e.message);
+              } finally {
+                setIsTranscribing(false);
+              }
+            };
+          };
+          mediaRecorder.start();
+        } else {
+          await Audio.requestPermissionsAsync();
+          await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+          const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+          recordingRef.current = recording;
+        }
+        setIsRecording(true);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+
   // ─── Step: Select Spread ───
   if (step === 'select') {
     return (
@@ -116,6 +207,9 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
             onChangeText={setQuestion}
             multiline
           />
+          <TouchableOpacity style={[styles.micBtn, isRecording && styles.micBtnActive]} onPress={handleMicPress} activeOpacity={0.8} disabled={isTranscribing}>
+            <Text style={styles.micIcon}>{isTranscribing ? '⏳' : isRecording ? '⏹ 停止录音' : '🎤 语音输入'}</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.primaryBtn} onPress={handleStartDraw} activeOpacity={0.8}>
             <Text style={styles.primaryBtnText}>{t.startReading}</Text>
           </TouchableOpacity>
@@ -253,6 +347,9 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.BORDER, marginBottom: 24,
     textAlignVertical: 'top',
   },
+  micBtn: { borderRadius: 30, borderWidth: 1, borderColor: COLORS.BORDER, padding: 12, alignItems: 'center', marginBottom: 12 },
+  micBtnActive: { borderColor: '#e53935', backgroundColor: '#e5393520' },
+  micIcon: { color: COLORS.TEXT_SECONDARY, fontSize: 15 },
   primaryBtn: { backgroundColor: COLORS.GOLD, borderRadius: 30, padding: 16, alignItems: 'center' },
   primaryBtnText: { color: COLORS.BG_DEEP, fontWeight: '700', fontSize: 16 },
   cardsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
