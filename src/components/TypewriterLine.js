@@ -3,16 +3,19 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { extractStreamingReadable } from '../utils/streamingParser';
 import { useTheme } from '../contexts/ThemeContext';
 
-const MAX_CHARS = 120;
-const TICK = 18;
+const LINE_WIDTH = 24;
+const MAX_LINES = 5;
+const CHARS_PER_TICK = 3;
+const TICK = 45;
 
 export default function TypewriterLine({ streamingText }) {
   const { colors } = useTheme();
-  const [text, setText] = useState('');
+  const [lines, setLines] = useState([]);
   const pointerRef = useRef(0);
   const sourceRef = useRef('');
+  const linesRef = useRef([]);
+  const currentLineRef = useRef('');
 
-  // Keep source up to date from streaming
   useEffect(() => {
     const readable = extractStreamingReadable(streamingText, '');
     if (readable && readable.length > sourceRef.current.length) {
@@ -20,32 +23,49 @@ export default function TypewriterLine({ streamingText }) {
     }
   }, [streamingText]);
 
-  // Continuous typing loop — loops from start when catching up
   useEffect(() => {
     const interval = setInterval(() => {
       const src = sourceRef.current;
       if (!src) return;
 
-      // Caught up — loop back to start
       if (pointerRef.current >= src.length) {
         pointerRef.current = 0;
+        linesRef.current = [];
+        currentLineRef.current = '';
       }
 
-      pointerRef.current++;
-      const idx = pointerRef.current;
-      const windowStart = Math.max(0, idx - MAX_CHARS);
-      setText(src.slice(windowStart, idx));
+      const end = Math.min(pointerRef.current + CHARS_PER_TICK, src.length);
+      for (let i = pointerRef.current; i < end; i++) {
+        const ch = src[i];
+        if (ch === '\n') {
+          linesRef.current.push(currentLineRef.current);
+          currentLineRef.current = '';
+        } else {
+          currentLineRef.current += ch;
+          if (currentLineRef.current.length >= LINE_WIDTH) {
+            linesRef.current.push(currentLineRef.current);
+            currentLineRef.current = '';
+          }
+        }
+      }
+      pointerRef.current = end;
+
+      const all = currentLineRef.current
+        ? [...linesRef.current, currentLineRef.current]
+        : [...linesRef.current];
+      const visible = all.slice(-MAX_LINES);
+      setLines(visible);
     }, TICK);
 
     return () => clearInterval(interval);
   }, []);
 
-  if (!text) return null;
+  if (!lines.length) return null;
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.text, { color: colors.GOLD }]} numberOfLines={5}>
-        {text}
+      <Text style={[styles.text, { color: colors.GOLD }]}>
+        {lines.join('\n')}
         <Text style={styles.cursor}>▎</Text>
       </Text>
     </View>
@@ -53,7 +73,7 @@ export default function TypewriterLine({ streamingText }) {
 }
 
 const styles = StyleSheet.create({
-  container: { marginTop: 24, paddingHorizontal: 16, alignItems: 'center', minHeight: 120 },
+  container: { marginTop: 24, paddingHorizontal: 16, alignItems: 'center', height: 130 },
   text: { fontSize: 15, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', lineHeight: 24, textAlign: 'center' },
   cursor: { opacity: 0.4 },
 });
