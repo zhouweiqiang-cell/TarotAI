@@ -39,8 +39,13 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
     }
   }
 
+  function handleRedraw() {
+    setTodayReading(null);
+    setTodayCard(null);
+    setStreamingText('');
+  }
+
   async function handleDailyDraw() {
-    if (todayReading) return;
     setLoading(true);
 
     const settings = await getSettings();
@@ -233,6 +238,9 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
             )}
             <Text style={ds.overallMessage}>{todayReading.result?.overallMessage}</Text>
             <Text style={ds.advice}>{todayReading.result?.advice}</Text>
+            <TouchableOpacity style={ds.redrawBtn} onPress={handleRedraw} activeOpacity={0.8}>
+              <Text style={ds.redrawBtnText}>{t.redraw || '重新抽牌'}</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -275,6 +283,11 @@ function cs(colors) {
     todayCardState: { fontSize: 15, color: colors.TEXT_SECONDARY },
     overallMessage: { fontSize: 17, color: colors.TEXT_PRIMARY, lineHeight: 28 },
     advice: { fontSize: 16, color: colors.TEXT_SECONDARY, lineHeight: 26 },
+    redrawBtn: {
+      marginTop: 20, alignSelf: 'center', paddingHorizontal: 24, paddingVertical: 10,
+      borderRadius: 20, borderWidth: 1, borderColor: colors.BORDER,
+    },
+    redrawBtnText: { color: colors.TEXT_MUTED, fontSize: 15, fontWeight: '600' },
     spreadCTA: {
       marginTop: 32, backgroundColor: colors.BG_CARD, borderRadius: 12,
       padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.BORDER,

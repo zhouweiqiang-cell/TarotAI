@@ -18,6 +18,7 @@ const texts = {
     dailySubtitle: '每天一张牌，聆听宇宙的声音',
     dailyQuestion: '你今天有什么想问的？（可选）',
     dailyDraw:    '抽取今日之牌',
+    redraw:       '重新抽牌',
     alreadyDrawn: '你今天已经抽过牌了',
     viewReading:  '查看解读',
 
@@ -188,7 +189,7 @@ ${cardsDesc}
   en: {
     tabHome: 'Daily', tabSpread: 'Reading', tabCards: 'Cards', tabHistory: 'History', tabSettings: 'Settings',
     dailyTitle: "Today's Card", dailySubtitle: 'One card a day, listen to the universe',
-    dailyQuestion: 'Do you have a question today? (optional)', dailyDraw: 'Draw Daily Card',
+    dailyQuestion: 'Do you have a question today? (optional)', dailyDraw: 'Draw Daily Card', redraw: 'Redraw',
     alreadyDrawn: "You've already drawn today", viewReading: 'View Reading',
     spreadTitle: 'Choose a Spread', spreadQuestion: 'What is your question?',
     spreadQuestionHint: 'e.g. About love, work, or a decision...',
@@ -244,7 +245,7 @@ ${cardsDesc}
   ja: {
     tabHome: '今日', tabSpread: '占い', tabCards: 'カード', tabHistory: '履歴', tabSettings: '設定',
     dailyTitle: '今日のカード', dailySubtitle: '毎日一枚、宇宙の声を聴く',
-    dailyQuestion: '今日の質問は？（任意）', dailyDraw: '今日のカードを引く',
+    dailyQuestion: '今日の質問は？（任意）', dailyDraw: '今日のカードを引く', redraw: '引き直す',
     alreadyDrawn: '今日はすでに引きました', viewReading: '解釈を見る',
     spreadTitle: 'スプレッドを選ぶ', spreadQuestion: 'あなたの質問は何ですか？',
     spreadQuestionHint: '例：恋愛、仕事、決断について...',
