@@ -414,4 +414,21 @@ export const SPREADS = {
       { zh: '最终结果', en: 'Outcome', ja: '結果' },
     ],
   },
+  celtic_cross: {
+    id: 'celtic_cross',
+    name: { zh: '凯尔特十字', en: 'Celtic Cross', ja: 'ケルト十字' },
+    count: 10,
+    positions: [
+      { zh: '现状', en: 'Present', ja: '現状' },
+      { zh: '挑战', en: 'Challenge', ja: '障害' },
+      { zh: '潜意识', en: 'Subconscious', ja: '潜在意識' },
+      { zh: '过去', en: 'Past', ja: '過去' },
+      { zh: '目标', en: 'Goal', ja: '目標' },
+      { zh: '近未来', en: 'Near Future', ja: '近い未来' },
+      { zh: '自我认知', en: 'Self', ja: '自己認識' },
+      { zh: '外部环境', en: 'Environment', ja: '環境' },
+      { zh: '希望与恐惧', en: 'Hopes & Fears', ja: '希望と恐れ' },
+      { zh: '最终结果', en: 'Outcome', ja: '最終結果' },
+    ],
+  },
 };

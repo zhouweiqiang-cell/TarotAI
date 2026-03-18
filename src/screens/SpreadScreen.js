@@ -265,42 +265,100 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
     );
   }
 
+  // ─── Render a single card slot ───
+  function renderCardSlot(i, width = 90, height = 140, extraStyle) {
+    const item = drawnCards[i];
+    if (!item) return null;
+    const isRevealed = revealed.includes(i);
+    const suitColor = SUIT_COLORS[item.card.arcana] || COLORS.GOLD;
+    return (
+      <View key={i} style={[styles.cardSlot, extraStyle]}>
+        <FlipCard
+          card={item.card}
+          isReversed={item.isReversed}
+          revealed={isRevealed}
+          onPress={() => revealCard(i)}
+          width={width}
+          height={height}
+          disabled={isRevealed}
+        />
+        {isRevealed && (
+          <View style={[styles.revealedBadge, { backgroundColor: suitColor + '22', borderColor: suitColor }]}>
+            <Text style={[styles.revealedName, { color: suitColor }]} numberOfLines={1}>
+              {item.card.name[lang]}
+            </Text>
+            <Text style={styles.revealedState}>{item.isReversed ? t.reversed : t.upright}</Text>
+          </View>
+        )}
+        <Text style={styles.cardPosition}>{item.position}</Text>
+      </View>
+    );
+  }
+
   // ─── Step: Draw Cards ───
   if (step === 'draw') {
     const allRevealed = revealed.length === drawnCards.length;
+    const isCeltic = selectedSpread?.id === 'celtic_cross';
+
     return (
       <SafeAreaView style={styles.safe}>
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
           <Text style={styles.pageTitle}>{selectedSpread.name[lang]}</Text>
           <Text style={styles.subtitle}>{allRevealed ? t.readingLoading : t.drawCard}</Text>
-          <View style={styles.cardsGrid}>
-            {drawnCards.map((item, i) => {
-              const isRevealed = revealed.includes(i);
-              const suitColor = SUIT_COLORS[item.card.arcana] || COLORS.GOLD;
-              return (
-                <View key={i} style={styles.cardSlot}>
-                  <FlipCard
-                    card={item.card}
-                    isReversed={item.isReversed}
-                    revealed={isRevealed}
-                    onPress={() => revealCard(i)}
-                    width={90}
-                    height={140}
-                    disabled={isRevealed}
-                  />
-                  {isRevealed && (
-                    <View style={[styles.revealedBadge, { backgroundColor: suitColor + '22', borderColor: suitColor }]}>
-                      <Text style={[styles.revealedName, { color: suitColor }]} numberOfLines={1}>
-                        {item.card.name[lang]}
-                      </Text>
-                      <Text style={styles.revealedState}>{item.isReversed ? t.reversed : t.upright}</Text>
-                    </View>
-                  )}
-                  <Text style={styles.cardPosition}>{item.position}</Text>
+
+          {isCeltic ? (
+            /* Celtic Cross layout:
+               Cross section (left): cards 0-5
+               Staff section (right): cards 6-9
+               Layout:
+                      [4]
+                 [3] [0/1] [5]
+                      [2]
+                              [9]
+                              [8]
+                              [7]
+                              [6]
+            */
+            <View style={styles.celticContainer}>
+              <View style={styles.celticCross}>
+                {/* Row 1: Goal (top) */}
+                <View style={styles.celticRow}>
+                  <View style={styles.celticEmpty} />
+                  {renderCardSlot(4, 70, 110)}
+                  <View style={styles.celticEmpty} />
                 </View>
-              );
-            })}
-          </View>
+                {/* Row 2: Past - Present/Challenge - Future */}
+                <View style={styles.celticRow}>
+                  {renderCardSlot(3, 70, 110)}
+                  <View style={styles.celticCenter}>
+                    {renderCardSlot(0, 70, 110)}
+                    {/* Challenge card overlaid rotated */}
+                    <View style={styles.celticCrossCard}>
+                      {renderCardSlot(1, 70, 110, { transform: [{ rotate: '90deg' }] })}
+                    </View>
+                  </View>
+                  {renderCardSlot(5, 70, 110)}
+                </View>
+                {/* Row 3: Subconscious (bottom) */}
+                <View style={styles.celticRow}>
+                  <View style={styles.celticEmpty} />
+                  {renderCardSlot(2, 70, 110)}
+                  <View style={styles.celticEmpty} />
+                </View>
+              </View>
+              {/* Staff column */}
+              <View style={styles.celticStaff}>
+                {renderCardSlot(9, 70, 110)}
+                {renderCardSlot(8, 70, 110)}
+                {renderCardSlot(7, 70, 110)}
+                {renderCardSlot(6, 70, 110)}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.cardsGrid}>
+              {drawnCards.map((_, i) => renderCardSlot(i))}
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     );
@@ -407,6 +465,14 @@ const styles = StyleSheet.create({
   primaryBtn: { backgroundColor: COLORS.GOLD, borderRadius: 30, padding: 16, alignItems: 'center' },
   primaryBtnText: { color: COLORS.BG_DEEP, fontWeight: '700', fontSize: 18 },
   cardsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
+  // Celtic Cross layout
+  celticContainer: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
+  celticCross: { alignItems: 'center' },
+  celticRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  celticEmpty: { width: 90 },
+  celticCenter: { position: 'relative', width: 90, height: 140, alignItems: 'center', justifyContent: 'center' },
+  celticCrossCard: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+  celticStaff: { justifyContent: 'flex-end', gap: 4 },
   cardSlot: { alignItems: 'center', width: 90 },
   revealedBadge: { marginTop: 6, borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center', width: '100%' },
   revealedName: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
