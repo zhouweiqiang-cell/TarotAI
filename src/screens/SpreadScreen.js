@@ -107,66 +107,75 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
 
   async function handleMicPress() {
     if (isTranscribing) return;
+
+    if (Platform.OS === 'web') {
+      // Web: use native SpeechRecognition — no API call needed
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) { alert('浏览器不支持语音识别，请使用 Chrome'); return; }
+      const recognition = new SpeechRecognition();
+      recognition.lang = lang === 'ja' ? 'ja-JP' : lang === 'en' ? 'en-US' : 'zh-CN';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      setIsRecording(true);
+      recognition.onresult = (e) => {
+        setQuestion(e.results[0][0].transcript);
+        setIsRecording(false);
+      };
+      recognition.onerror = (e) => {
+        alert('识别出错: ' + e.error);
+        setIsRecording(false);
+      };
+      recognition.onend = () => setIsRecording(false);
+      recognition.start();
+      return;
+    }
+
+    // Native: expo-av recording → Gemini transcription
     if (isRecording) {
-      // Stop recording
       setIsRecording(false);
       setIsTranscribing(true);
-      if (Platform.OS === 'web') {
-        mediaRecorderRef.current?.stop();
-      } else {
-        try {
-          await recordingRef.current.stopAndUnloadAsync();
-          const uri = recordingRef.current.getURI();
-          const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-          const text = await transcribeAudio(base64, 'audio/mp4');
-          if (text) setQuestion(text);
-          else alert('识别失败，请重试');
-        } catch (e) {
-          alert('识别出错: ' + e.message);
-        } finally {
-          setIsTranscribing(false);
-        }
+      try {
+        await recordingRef.current.stopAndUnloadAsync();
+        const uri = recordingRef.current.getURI();
+        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        const text = await transcribeAudio(base64, 'audio/wav');
+        if (text) setQuestion(text);
+        else alert('识别失败，请重试');
+      } catch (e) {
+        alert('识别出错: ' + e.message);
+      } finally {
+        setIsTranscribing(false);
       }
     } else {
-      // Start recording
       try {
-        if (Platform.OS === 'web') {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const mediaRecorder = new MediaRecorder(stream);
-          mediaRecorderRef.current = mediaRecorder;
-          audioChunksRef.current = [];
-          mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-          mediaRecorder.onstop = async () => {
-            mediaRecorder.stream.getTracks().forEach(t => t.stop());
-            const rawMime = mediaRecorder.mimeType || 'audio/webm';
-            const mimeType = rawMime.split(';')[0];
-            const blob = new Blob(audioChunksRef.current, { type: mimeType });
-            if (blob.size === 0) { setIsTranscribing(false); return; }
-            const reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = async () => {
-              try {
-                const base64 = reader.result.split(',')[1];
-                const text = await transcribeAudio(base64, mimeType);
-                if (text) setQuestion(text);
-                else alert('识别失败，请重试');
-              } catch (e) {
-                alert('识别出错: ' + e.message);
-              } finally {
-                setIsTranscribing(false);
-              }
-            };
-          };
-          mediaRecorder.start();
-        } else {
-          await Audio.requestPermissionsAsync();
-          await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-          const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-          recordingRef.current = recording;
-        }
+        await Audio.requestPermissionsAsync();
+        await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+        const { recording } = await Audio.Recording.createAsync({
+          android: {
+            extension: '.wav',
+            outputFormat: 6, // WAVE
+            audioEncoder: 3, // PCM_16BIT
+            sampleRate: 16000,
+            numberOfChannels: 1,
+            bitRate: 256000,
+          },
+          ios: {
+            extension: '.wav',
+            outputFormat: 'lpcm',
+            audioQuality: 127,
+            sampleRate: 16000,
+            numberOfChannels: 1,
+            bitRate: 256000,
+            linearPCMBitDepth: 16,
+            linearPCMIsBigEndian: false,
+            linearPCMIsFloat: false,
+          },
+          web: {},
+        });
+        recordingRef.current = recording;
         setIsRecording(true);
       } catch (e) {
-        console.error(e);
+        alert('录音失败: ' + e.message);
       }
     }
   }
