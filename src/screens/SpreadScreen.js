@@ -112,22 +112,38 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
 
     if (Platform.OS === 'web') {
       // Web: use native SpeechRecognition — no API call needed
+      if (isRecording && mediaRecorderRef.current) {
+        mediaRecorderRef.current.abort();
+        mediaRecorderRef.current = null;
+        setIsRecording(false);
+        return;
+      }
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) { alert('浏览器不支持语音识别，请使用 Chrome'); return; }
       const recognition = new SpeechRecognition();
       recognition.lang = lang === 'ja' ? 'ja-JP' : lang === 'en' ? 'en-US' : 'zh-CN';
       recognition.interimResults = false;
+      recognition.continuous = false;
       recognition.maxAlternatives = 1;
+      mediaRecorderRef.current = recognition;
       setIsRecording(true);
       recognition.onresult = (e) => {
         setQuestion(e.results[0][0].transcript);
         setIsRecording(false);
+        mediaRecorderRef.current = null;
       };
       recognition.onerror = (e) => {
-        alert('识别出错: ' + e.error);
+        // abort/no-speech are normal — user cancelled or was silent
+        if (e.error !== 'aborted' && e.error !== 'no-speech') {
+          alert('识别出错: ' + e.error);
+        }
         setIsRecording(false);
+        mediaRecorderRef.current = null;
       };
-      recognition.onend = () => setIsRecording(false);
+      recognition.onend = () => {
+        setIsRecording(false);
+        mediaRecorderRef.current = null;
+      };
       recognition.start();
       return;
     }
