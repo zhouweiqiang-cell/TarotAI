@@ -7,6 +7,7 @@ import { getTexts } from '../services/i18n';
 import { getSettings } from '../services/settingsStorage';
 import { addReading } from '../services/historyStorage';
 import { analyzeSpreadStream } from '../services/tarotAnalyzer';
+import { getCelestialContext } from '../services/celestial';
 import { drawRandom, SPREADS } from '../data/cards';
 import { CAUTION } from '../constants/theme';
 import { extractStreamingReadable } from '../utils/streamingParser';
@@ -130,6 +131,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   const t = getTexts(lang);
   const { colors, suitColors, isDune } = useTheme();
   const ds = useMemo(() => cs(colors), [colors]);
+  const celestial = useMemo(() => getCelestialContext(new Date(), lang), [lang]);
   const [step, setStep] = useState('select'); // 'select' | 'question' | 'draw' | 'reading'
   const [selectedSpread, setSelectedSpread] = useState(null);
   const [question, setQuestion] = useState('');
@@ -180,7 +182,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
       const res = await analyzeSpreadStream(
         drawnCards, question, settings.model, lang, settings.style,
         (text) => setStreamingText(text),
-        settings.tone
+        settings.tone, celestial.promptContext
       );
       setResult(res);
       setStreamingText('');
@@ -380,6 +382,14 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
         <ScrollView style={styles.container} contentContainerStyle={[styles.content, !isCeltic && styles.drawContentGrow]}>
           <Text style={ds.pageTitle}>{selectedSpread.name[lang]}</Text>
           <Text style={ds.subtitle}>{allRevealed ? t.readingLoading : t.drawCard}</Text>
+          {!allRevealed && (
+            <View style={ds.celestialHint}>
+              <Text style={ds.celestialHintText}>{celestial.headline}</Text>
+              {celestial.messages.slice(0, 2).map((msg, i) => (
+                <Text key={i} style={ds.celestialRetroText}>{msg}</Text>
+              ))}
+            </View>
+          )}
 
           {selectedSpread?.id === 'five_card' ? (
             <View style={styles.drawCardsCenter}>
@@ -570,6 +580,12 @@ function cs(colors) {
     safe: { flex: 1, backgroundColor: colors.BG_PAGE },
     pageTitle: { fontSize: 28, fontWeight: '800', color: colors.GOLD, marginBottom: 8 },
     subtitle: { fontSize: 15, color: colors.TEXT_SECONDARY, marginBottom: 24 },
+    celestialHint: {
+      backgroundColor: colors.BG_CARD, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+      marginBottom: 16, borderWidth: 1, borderColor: colors.BORDER, alignItems: 'center', gap: 4,
+    },
+    celestialHintText: { fontSize: 14, color: colors.GOLD, fontWeight: '600' },
+    celestialRetroText: { fontSize: 12, color: '#F59E0B', lineHeight: 18, textAlign: 'center' },
     backBtn: { color: colors.TEXT_SECONDARY, fontSize: 16, marginBottom: 20 },
     spreadCard: { backgroundColor: colors.BG_CARD, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.BORDER },
     spreadName: { fontSize: 19, fontWeight: '700', color: colors.TEXT_PRIMARY },

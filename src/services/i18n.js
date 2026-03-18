@@ -134,7 +134,7 @@ const texts = {
     errorRecording: '录音失败: ',
 
     // AI Prompt
-    buildPrompt: (question, cards, style, tone) => {
+    buildPrompt: (question, cards, style, tone, celestialContext) => {
       const styleGuide = {
         mystical: '用神秘主义和占星学的语言，富有诗意和仪式感',
         psychological: '用荣格心理学和原型象征的角度，理性而深刻',
@@ -150,23 +150,23 @@ const texts = {
       }[tone] || '请用亲切随和的口语';
 
       const cardsDesc = cards.map(({ card, isReversed, position }) => {
-        const lang = 'zh';
         const lines = [`【${position}】${card.name.zh}（${isReversed ? '逆位' : '正位'}）`];
-        if (card.keywords?.[lang]) lines.push(`  关键词：${card.keywords[lang].join('、')}`);
-        if (card.meaning?.[lang]) {
-          const m = isReversed ? card.meaning[lang].reversed : card.meaning[lang].upright;
-          if (m) lines.push(`  牌义：${m}`);
-        }
+        const kw = isReversed ? card.keywords?.reversed?.zh : card.keywords?.upright?.zh;
+        if (kw) lines.push(`  关键词：${kw.join('、')}`);
+        const m = isReversed ? card.meaning?.reversed?.zh : card.meaning?.upright?.zh;
+        if (m) lines.push(`  牌义：${m}`);
         if (card.element) lines.push(`  元素：${card.element}`);
         if (card.astrology) lines.push(`  星座/行星：${card.astrology}`);
         return lines.join('\n');
       }).join('\n\n');
 
+      const celestialBlock = celestialContext ? `\n${celestialContext}\n` : '';
+
       return `你是一位专业的塔罗占卜师。
 
 【解读流派】${styleGuide}。
 【沟通风格】${toneGuide}。
-
+${celestialBlock}
 用户的问题：${question || '请给予今日的综合指引'}
 
 抽到的牌阵（含牌义参考）：
@@ -247,18 +247,21 @@ ${cardsDesc}
     errorTranscriptionFail: 'Recognition error: ', errorMicrophone: 'Microphone access failed: ',
     errorRecording: 'Recording failed: ',
 
-    buildPrompt: (question, cards, style, tone) => {
+    buildPrompt: (question, cards, style, tone, celestialContext) => {
       const styleGuide = { mystical: 'Use mystical, poetic language', psychological: 'Use Jungian psychology and archetypes', practical: 'Be direct and practical' }[style] || 'Use mystical language';
       const toneGuide = { formal: 'Use formal, academic language', friendly: 'Use casual, conversational language like chatting with a friend', humorous: 'Use humor, vivid metaphors and witty expressions', blunt: 'Be blunt and straightforward, no sugarcoating', gentle: 'Be warm, encouraging and nurturing' }[tone] || 'Use casual, conversational language';
       const cardsDesc = cards.map(({ card, isReversed, position }) => {
         const lines = [`[${position}] ${card.name.en} (${isReversed ? 'Reversed' : 'Upright'})`];
-        if (card.keywords?.en) lines.push(`  Keywords: ${card.keywords.en.join(', ')}`);
-        if (card.meaning?.en) { const m = isReversed ? card.meaning.en.reversed : card.meaning.en.upright; if (m) lines.push(`  Meaning: ${m}`); }
+        const kw = isReversed ? card.keywords?.reversed?.en : card.keywords?.upright?.en;
+        if (kw) lines.push(`  Keywords: ${kw.join(', ')}`);
+        const m = isReversed ? card.meaning?.reversed?.en : card.meaning?.upright?.en;
+        if (m) lines.push(`  Meaning: ${m}`);
         if (card.element) lines.push(`  Element: ${card.element}`);
         if (card.astrology) lines.push(`  Astrology: ${card.astrology}`);
         return lines.join('\n');
       }).join('\n\n');
-      return `You are a professional tarot reader.\n\n[Style] ${styleGuide}.\n[Tone] ${toneGuide}.\n\nQuestion: ${question || 'Give general daily guidance'}\n\nSpread (with card references):\n${cardsDesc}\n\nRequirements:\n1. Each card reading must relate to the user's question\n2. Analyze connections between cards (elements, energy, narrative)\n3. Weave all cards into a coherent overall narrative\n4. Reference elemental and astrological correspondences\n\nReturn JSON:\n{\n  "cardReadings": [{"cardId": "...", "position": "...", "isReversed": true/false, "reading": "3-5 sentences"}],\n  "connections": "Inter-card analysis (2-3 sentences)",\n  "narrative": "Overall story weaving all cards (3-5 sentences)",\n  "overallMessage": "Core answer to the question (2-4 sentences)",\n  "advice": "Actionable advice (2-3 items)",\n  "caution": "Potential risks or things to watch out for (1-2 sentences)",\n  "energy": ["keyword1", "keyword2", "keyword3"]\n}\n\nReturn JSON only.`;
+      const celestialBlock = celestialContext ? `\n${celestialContext}\n` : '';
+      return `You are a professional tarot reader.\n\n[Style] ${styleGuide}.\n[Tone] ${toneGuide}.\n${celestialBlock}\nQuestion: ${question || 'Give general daily guidance'}\n\nSpread (with card references):\n${cardsDesc}\n\nRequirements:\n1. Each card reading must relate to the user's question\n2. Analyze connections between cards (elements, energy, narrative)\n3. Weave all cards into a coherent overall narrative\n4. Reference elemental and astrological correspondences\n\nReturn JSON:\n{\n  "cardReadings": [{"cardId": "...", "position": "...", "isReversed": true/false, "reading": "3-5 sentences"}],\n  "connections": "Inter-card analysis (2-3 sentences)",\n  "narrative": "Overall story weaving all cards (3-5 sentences)",\n  "overallMessage": "Core answer to the question (2-4 sentences)",\n  "advice": "Actionable advice (2-3 items)",\n  "caution": "Potential risks or things to watch out for (1-2 sentences)",\n  "energy": ["keyword1", "keyword2", "keyword3"]\n}\n\nReturn JSON only.`;
     },
   },
 
@@ -309,18 +312,21 @@ ${cardsDesc}
     errorTranscriptionFail: '認識エラー: ', errorMicrophone: 'マイクアクセスに失敗: ',
     errorRecording: '録音に失敗: ',
 
-    buildPrompt: (question, cards, style, tone) => {
+    buildPrompt: (question, cards, style, tone, celestialContext) => {
       const styleGuide = { mystical: '神秘的で詩的な言葉で', psychological: 'ユング心理学とアーキタイプの視点で', practical: '具体的で実践的なアドバイスを' }[style] || '神秘的な言葉で';
       const toneGuide = { formal: '格式ばった学術的な表現で', friendly: '友達と話すようなカジュアルな口調で', humorous: 'ユーモアと比喩を使って楽しく', blunt: '率直に、遠回しにせず', gentle: '温かく励ますような優しい口調で' }[tone] || '友達と話すようなカジュアルな口調で';
       const cardsDesc = cards.map(({ card, isReversed, position }) => {
         const lines = [`【${position}】${card.name.ja}（${isReversed ? '逆位置' : '正位置'}）`];
-        if (card.keywords?.ja) lines.push(`  キーワード：${card.keywords.ja.join('、')}`);
-        if (card.meaning?.ja) { const m = isReversed ? card.meaning.ja.reversed : card.meaning.ja.upright; if (m) lines.push(`  意味：${m}`); }
+        const kw = isReversed ? card.keywords?.reversed?.ja : card.keywords?.upright?.ja;
+        if (kw) lines.push(`  キーワード：${kw.join('、')}`);
+        const m = isReversed ? card.meaning?.reversed?.ja : card.meaning?.upright?.ja;
+        if (m) lines.push(`  意味：${m}`);
         if (card.element) lines.push(`  元素：${card.element}`);
         if (card.astrology) lines.push(`  星座：${card.astrology}`);
         return lines.join('\n');
       }).join('\n\n');
-      return `あなたはプロのタロットリーダーです。\n\n【スタイル】${styleGuide}解釈してください。\n【トーン】${toneGuide}話してください。\n\n質問：${question || '今日の総合的なガイダンスをください'}\n\nスプレッド（カード情報付き）：\n${cardsDesc}\n\n要件：\n1. 各カードの解釈は質問に関連させること\n2. カード間の関連性を分析すること\n3. すべてのカードを一つの物語に織り込むこと\n4. 元素や星座の対応を引用すること\n\nJSON形式で返してください：\n{\n  "cardReadings": [{"cardId": "...", "position": "...", "isReversed": true/false, "reading": "3-5文"}],\n  "connections": "カード間の関連分析（2-3文）",\n  "narrative": "全体の物語（3-5文）",\n  "overallMessage": "総合メッセージ（2-4文）",\n  "advice": "具体的なアドバイス（2-3項目）",\n  "caution": "注意事項やリスク（1-2文）",\n  "energy": ["キーワード1", "キーワード2", "キーワード3"]\n}\n\nJSONのみを返してください。`;
+      const celestialBlock = celestialContext ? `\n${celestialContext}\n` : '';
+      return `あなたはプロのタロットリーダーです。\n\n【スタイル】${styleGuide}解釈してください。\n【トーン】${toneGuide}話してください。\n${celestialBlock}\n質問：${question || '今日の総合的なガイダンスをください'}\n\nスプレッド（カード情報付き）：\n${cardsDesc}\n\n要件：\n1. 各カードの解釈は質問に関連させること\n2. カード間の関連性を分析すること\n3. すべてのカードを一つの物語に織り込むこと\n4. 元素や星座の対応を引用すること\n\nJSON形式で返してください：\n{\n  "cardReadings": [{"cardId": "...", "position": "...", "isReversed": true/false, "reading": "3-5文"}],\n  "connections": "カード間の関連分析（2-3文）",\n  "narrative": "全体の物語（3-5文）",\n  "overallMessage": "総合メッセージ（2-4文）",\n  "advice": "具体的なアドバイス（2-3項目）",\n  "caution": "注意事項やリスク（1-2文）",\n  "energy": ["キーワード1", "キーワード2", "キーワード3"]\n}\n\nJSONのみを返してください。`;
     },
   },
 };

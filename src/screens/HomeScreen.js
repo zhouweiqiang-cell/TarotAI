@@ -4,6 +4,7 @@ import { getTexts } from '../services/i18n';
 import { getSettings } from '../services/settingsStorage';
 import { getTodayReading, getHistory, addReading, removeReading } from '../services/historyStorage';
 import { analyzeSpreadStream } from '../services/tarotAnalyzer';
+import { getCelestialContext } from '../services/celestial';
 import { drawRandom, getCard, SPREADS } from '../data/cards';
 import { CAUTION } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
@@ -24,6 +25,7 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
   const [loading, setLoading] = useState(false);
   const [streamingText, setStreamingText] = useState('');
   const [selectedReading, setSelectedReading] = useState(null);
+  const celestial = useMemo(() => getCelestialContext(new Date(), lang), [lang]);
 
   useEffect(() => {
     loadData();
@@ -79,7 +81,7 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
       const result = await analyzeSpreadStream(
         cards, '', settings.model, lang, settings.style,
         (text) => setStreamingText(text),
-        settings.tone
+        settings.tone, celestial.promptContext
       );
       setStreamingText('');
 
@@ -219,9 +221,15 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
 
         {!todayReading ? (
           <View style={styles.drawSection}>
-            {/* Before draw: show card back + draw button */}
+            {/* Before draw: show celestial context + card back + draw button */}
             {!animating && (
               <>
+                <View style={ds.celestialCard}>
+                  <Text style={ds.celestialHeadline}>{celestial.headline}</Text>
+                  {celestial.messages.map((msg, i) => (
+                    <Text key={i} style={msg.includes('逆行') || msg.includes('Retrograde') ? ds.celestialRetrograde : ds.celestialMessage}>{msg}</Text>
+                  ))}
+                </View>
                 <TarotCardImage showBack width={120} height={200} />
                 <TouchableOpacity style={ds.drawBtn} onPress={handleDailyDraw} activeOpacity={0.8}>
                   <Text style={ds.drawBtnText}>{t.dailyDraw}</Text>
@@ -306,6 +314,13 @@ function cs(colors) {
       borderRadius: 30, minWidth: 200, alignItems: 'center',
     },
     drawBtnText: { color: colors.BG_DEEP, fontWeight: '700', fontSize: 18 },
+    celestialCard: {
+      backgroundColor: colors.BG_CARD, borderRadius: 16, padding: 16, marginBottom: 20,
+      borderWidth: 1, borderColor: colors.BORDER_GOLD || colors.BORDER, alignItems: 'center', gap: 8, width: '100%',
+    },
+    celestialHeadline: { fontSize: 18, fontWeight: '700', color: colors.GOLD, letterSpacing: 0.5 },
+    celestialMessage: { fontSize: 14, color: colors.TEXT_SECONDARY, lineHeight: 22, textAlign: 'center' },
+    celestialRetrograde: { fontSize: 13, color: '#F59E0B', lineHeight: 20, textAlign: 'center', marginTop: 4 },
     sectionLabel: { fontSize: 14, color: colors.TEXT_MUTED },
     todayCardName: { fontSize: 22, fontWeight: '800', color: colors.GOLD },
     todayCardState: { fontSize: 15, color: colors.TEXT_SECONDARY },

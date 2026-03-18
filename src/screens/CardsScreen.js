@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAreaView, Modal } from 'react-native';
-import { ALL_CARDS } from '../data/cards';
+import { ALL_CARDS, ELEMENT_I18N, ASTRO_I18N } from '../data/cards';
 import { getTexts } from '../services/i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { getSuitColorFromTheme } from '../utils/cardUtils';
@@ -25,6 +25,22 @@ const ASTRO_ICON = {
   '火星': '♂', '木星': '♃', '土星': '♄', '天王星': '⛢',
   '海王星': '♆', '冥王星': '♇',
 };
+
+function getElementLabel(element, lang) {
+  const i18n = ELEMENT_I18N[element];
+  return i18n ? i18n[lang] || i18n.zh : element;
+}
+
+function getAstroLabel(astrology, lang) {
+  const i18n = ASTRO_I18N[astrology];
+  return i18n ? i18n[lang] || i18n.zh : astrology;
+}
+
+function getKeywords(card, direction, lang) {
+  const kw = card.keywords[direction];
+  if (Array.isArray(kw)) return kw; // legacy flat array
+  return kw[lang] || kw.zh || [];
+}
 
 const SUIT_LABELS = {
   zh: { major: '大阿尔卡纳', wands: '权杖', cups: '圣杯', swords: '宝剑', pentacles: '星币' },
@@ -83,19 +99,19 @@ export default function CardsScreen({ lang = 'zh' }) {
               <TarotCardImage card={card} width={56} height={88} style={styles.cardThumb} />
               <View style={styles.cardInfo}>
                 <Text style={ds.cardName}>{name}</Text>
-                <Text style={ds.cardKeywords}>{card.keywords.upright.slice(0, 3).join(' · ')}</Text>
+                <Text style={ds.cardKeywords}>{getKeywords(card, 'upright', lang).slice(0, 3).join(' · ')}</Text>
                 {(card.element || card.astrology) ? (
                   <View style={styles.cardMetaRow}>
                     {card.element && ELEMENT_ICON[card.element] ? (
                       <View style={[styles.metaBadge, { borderColor: ELEMENT_ICON[card.element].color + '60' }]}>
                         <Text style={styles.metaIcon}>{ELEMENT_ICON[card.element].emoji}</Text>
-                        <Text style={[styles.metaText, { color: ELEMENT_ICON[card.element].color }]}>{card.element}</Text>
+                        <Text style={[styles.metaText, { color: ELEMENT_ICON[card.element].color }]}>{getElementLabel(card.element, lang)}</Text>
                       </View>
                     ) : null}
                     {card.astrology ? (
                       <View style={[styles.metaBadge, { borderColor: colors.GOLD + '40' }]}>
                         <Text style={styles.metaIcon}>{ASTRO_ICON[card.astrology] || '✦'}</Text>
-                        <Text style={[styles.metaText, { color: colors.TEXT_SECONDARY }]}>{card.astrology}</Text>
+                        <Text style={[styles.metaText, { color: colors.TEXT_SECONDARY }]}>{getAstroLabel(card.astrology, lang)}</Text>
                       </View>
                     ) : null}
                   </View>
@@ -123,13 +139,13 @@ export default function CardsScreen({ lang = 'zh' }) {
                   {selected.element && ELEMENT_ICON[selected.element] ? (
                     <View style={[styles.detailMetaBadge, { backgroundColor: ELEMENT_ICON[selected.element].color + '18', borderColor: ELEMENT_ICON[selected.element].color + '50' }]}>
                       <Text style={styles.detailMetaEmoji}>{ELEMENT_ICON[selected.element].emoji}</Text>
-                      <Text style={[styles.detailMetaValue, { color: ELEMENT_ICON[selected.element].color }]}>{selected.element}</Text>
+                      <Text style={[styles.detailMetaValue, { color: ELEMENT_ICON[selected.element].color }]}>{getElementLabel(selected.element, lang)}</Text>
                     </View>
                   ) : null}
                   {selected.astrology ? (
                     <View style={[styles.detailMetaBadge, { backgroundColor: colors.GOLD + '12', borderColor: colors.GOLD + '40' }]}>
                       <Text style={styles.detailMetaEmoji}>{ASTRO_ICON[selected.astrology] || '✦'}</Text>
-                      <Text style={[styles.detailMetaValue, { color: colors.GOLD }]}>{selected.astrology}</Text>
+                      <Text style={[styles.detailMetaValue, { color: colors.GOLD }]}>{getAstroLabel(selected.astrology, lang)}</Text>
                     </View>
                   ) : null}
                 </View>
@@ -138,7 +154,7 @@ export default function CardsScreen({ lang = 'zh' }) {
               <View style={ds.meaningBlock}>
                 <Text style={ds.meaningLabel}>▲ {t.upright}</Text>
                 <View style={styles.keywordRow}>
-                  {selected.keywords.upright.map((k, i) => (
+                  {getKeywords(selected, 'upright', lang).map((k, i) => (
                     <View key={i} style={ds.keyword}><Text style={ds.keywordText}>{k}</Text></View>
                   ))}
                 </View>
@@ -148,7 +164,7 @@ export default function CardsScreen({ lang = 'zh' }) {
               <View style={[ds.reversedBlock]}>
                 <Text style={ds.reversedLabel}>▼ {t.reversed}</Text>
                 <View style={styles.keywordRow}>
-                  {selected.keywords.reversed.map((k, i) => (
+                  {getKeywords(selected, 'reversed', lang).map((k, i) => (
                     <View key={i} style={ds.keywordReversed}><Text style={ds.keywordReversedText}>{k}</Text></View>
                   ))}
                 </View>
