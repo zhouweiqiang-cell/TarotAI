@@ -109,22 +109,19 @@ export default function CardsScreen({ lang = 'zh' }) {
               <Text style={styles.detailName}>{selected.name[lang] || selected.name.zh}</Text>
               {(selected.element || selected.astrology) ? (
                 <View style={styles.detailMetaRow}>
+                  {/* 图标已能表意，标签文字注释掉保留备用 */}
                   {selected.element && ELEMENT_ICON[selected.element] ? (
                     <View style={[styles.detailMetaBadge, { backgroundColor: ELEMENT_ICON[selected.element].color + '18', borderColor: ELEMENT_ICON[selected.element].color + '50' }]}>
                       <Text style={styles.detailMetaEmoji}>{ELEMENT_ICON[selected.element].emoji}</Text>
-                      <View>
-                        <Text style={styles.detailMetaLabel}>{t.element}</Text>
-                        <Text style={[styles.detailMetaValue, { color: ELEMENT_ICON[selected.element].color }]}>{selected.element}</Text>
-                      </View>
+                      {/* <Text style={styles.detailMetaLabel}>{t.element}</Text> */}
+                      <Text style={[styles.detailMetaValue, { color: ELEMENT_ICON[selected.element].color }]}>{selected.element}</Text>
                     </View>
                   ) : null}
                   {selected.astrology ? (
                     <View style={[styles.detailMetaBadge, { backgroundColor: COLORS.GOLD + '12', borderColor: COLORS.GOLD + '40' }]}>
                       <Text style={styles.detailMetaEmoji}>{ASTRO_ICON[selected.astrology] || '✦'}</Text>
-                      <View>
-                        <Text style={styles.detailMetaLabel}>{t.astrology}</Text>
-                        <Text style={[styles.detailMetaValue, { color: COLORS.GOLD }]}>{selected.astrology}</Text>
-                      </View>
+                      {/* <Text style={styles.detailMetaLabel}>{t.astrology}</Text> */}
+                      <Text style={[styles.detailMetaValue, { color: COLORS.GOLD }]}>{selected.astrology}</Text>
                     </View>
                   ) : null}
                 </View>
