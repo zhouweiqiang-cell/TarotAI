@@ -14,11 +14,11 @@ import CardsScreen   from './src/screens/CardsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 
 // ─── Tab Icon components ───────────────────────────────
-const SunIcon    = ({ color }) => <Text style={{ fontSize: 22, color }}>☀️</Text>;
-const OrbIcon    = ({ color }) => <Text style={{ fontSize: 22, color }}>🔮</Text>;
-const BookIcon   = ({ color }) => <Text style={{ fontSize: 22, color }}>📚</Text>;
-const ScrollIcon = ({ color }) => <Text style={{ fontSize: 22, color }}>📜</Text>;
-const GearIcon   = ({ color }) => <Text style={{ fontSize: 22, color }}>⚙️</Text>;
+const SunIcon    = ({ color }) => <Text style={{ fontSize: 22, color }}>☼</Text>;
+const OrbIcon    = ({ color }) => <Text style={{ fontSize: 22, color }}>◇</Text>;
+const BookIcon   = ({ color }) => <Text style={{ fontSize: 22, color }}>☰</Text>;
+const ScrollIcon = ({ color }) => <Text style={{ fontSize: 22, color }}>⧖</Text>;
+const GearIcon   = ({ color }) => <Text style={{ fontSize: 22, color }}>⟐</Text>;
 
 const TABS = [
   { id: 'home',     textKey: 'tabHome',     Icon: SunIcon },
