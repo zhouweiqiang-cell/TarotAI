@@ -20,7 +20,7 @@
     "scheme": "tarotai",
     "plugins": ["expo-font"],
     "web": {
-      "publicPath": "/TarotAI/"
+      "publicPath": "./"
     }
   }
 }
