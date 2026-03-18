@@ -111,38 +111,45 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
     if (isTranscribing) return;
 
     if (Platform.OS === 'web') {
-      // Web: use native SpeechRecognition — no API call needed
+      // Web: MediaRecorder → Gemini AI transcription
       if (isRecording && mediaRecorderRef.current) {
         mediaRecorderRef.current.stop();
         return;
       }
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) { alert('浏览器不支持语音识别，请使用 Chrome'); return; }
-      const recognition = new SpeechRecognition();
-      recognition.lang = lang === 'ja' ? 'ja-JP' : lang === 'en' ? 'en-US' : 'zh-CN';
-      recognition.interimResults = false;
-      recognition.continuous = false;
-      recognition.maxAlternatives = 1;
-      mediaRecorderRef.current = recognition;
-      setIsRecording(true);
-      recognition.onresult = (e) => {
-        setQuestion(e.results[0][0].transcript);
-        setIsRecording(false);
-        mediaRecorderRef.current = null;
-      };
-      recognition.onerror = (e) => {
-        // abort/no-speech are normal — user cancelled or was silent
-        if (e.error !== 'aborted' && e.error !== 'no-speech') {
-          alert('识别出错: ' + e.error);
-        }
-        setIsRecording(false);
-        mediaRecorderRef.current = null;
-      };
-      recognition.onend = () => {
-        setIsRecording(false);
-        mediaRecorderRef.current = null;
-      };
-      recognition.start();
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+        mediaRecorder.onstop = async () => {
+          mediaRecorder.stream.getTracks().forEach(tr => tr.stop());
+          mediaRecorderRef.current = null;
+          setIsRecording(false);
+          const rawMime = (mediaRecorder.mimeType || 'audio/webm').split(';')[0];
+          const blob = new Blob(audioChunksRef.current, { type: rawMime });
+          if (blob.size === 0) return;
+          setIsTranscribing(true);
+          try {
+            const reader = new FileReader();
+            const base64 = await new Promise((resolve) => {
+              reader.onloadend = () => resolve(reader.result.split(',')[1]);
+              reader.readAsDataURL(blob);
+            });
+            const text = await transcribeAudio(base64, rawMime);
+            if (text) setQuestion(text);
+            else alert('识别失败，请重试');
+          } catch (e) {
+            alert('识别出错: ' + e.message);
+          } finally {
+            setIsTranscribing(false);
+          }
+        };
+        mediaRecorder.start();
+        setIsRecording(true);
+      } catch (e) {
+        alert('麦克风访问失败: ' + e.message);
+      }
       return;
     }
 
