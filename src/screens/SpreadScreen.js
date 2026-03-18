@@ -118,7 +118,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
           await recordingRef.current.stopAndUnloadAsync();
           const uri = recordingRef.current.getURI();
           const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-          const text = await transcribeAudio(base64, 'audio/m4a');
+          const text = await transcribeAudio(base64, 'audio/mp4');
           if (text) setQuestion(text);
           else alert('识别失败，请重试');
         } catch (e) {
