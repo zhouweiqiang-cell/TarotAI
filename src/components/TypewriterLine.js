@@ -4,7 +4,7 @@ import { extractStreamingReadable } from '../utils/streamingParser';
 import { useTheme } from '../contexts/ThemeContext';
 
 const WINDOW = 30;
-const TICK = 30;
+const TICK = 18;
 
 export default function TypewriterLine({ streamingText }) {
   const { colors } = useTheme();
@@ -20,11 +20,16 @@ export default function TypewriterLine({ streamingText }) {
     }
   }, [streamingText]);
 
-  // Continuous typing loop — no animations, pure sliding window
+  // Continuous typing loop — loops from start when catching up
   useEffect(() => {
     const interval = setInterval(() => {
       const src = sourceRef.current;
-      if (!src || pointerRef.current >= src.length) return;
+      if (!src) return;
+
+      // Caught up — loop back to start
+      if (pointerRef.current >= src.length) {
+        pointerRef.current = 0;
+      }
 
       pointerRef.current++;
       const idx = pointerRef.current;
