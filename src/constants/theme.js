@@ -33,8 +33,8 @@ const COSMIC = {
 // ═══════════════════════════════════════════
 const DUNE = {
   BG_DEEP:    '#0F0D08',
-  BG_PAGE:    '#1C1810',
-  BG_CARD:    '#2A2418',
+  BG_PAGE:    'rgba(28, 24, 16, 0.88)',
+  BG_CARD:    'rgba(42, 36, 24, 0.85)',
   BG_GLASS:   'rgba(55, 45, 28, 0.6)',
 
   PRIMARY:       '#B8860B',
