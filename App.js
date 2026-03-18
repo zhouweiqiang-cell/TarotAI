@@ -22,8 +22,8 @@ const GearIcon   = ({ color }) => <Text style={{ fontSize: 22, color }}>⚙️</
 
 const TABS = [
   { id: 'home',     textKey: 'tabHome',     Icon: SunIcon },
-  { id: 'spread',   textKey: 'tabSpread',   Icon: OrbIcon },
   { id: 'cards',    textKey: 'tabCards',    Icon: BookIcon },
+  { id: 'spread',   textKey: 'tabSpread',   Icon: OrbIcon },
   { id: 'history',  textKey: 'tabHistory',  Icon: ScrollIcon },
   { id: 'settings', textKey: 'tabSettings', Icon: GearIcon },
 ];
