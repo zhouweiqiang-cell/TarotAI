@@ -15,7 +15,10 @@ const WORKER_URL = 'https://tarot-proxy.zhouweiqiang.workers.dev/';
 async function transcribeAudio(base64, mimeType) {
   const body = {
     contents: [{
-      parts: [{ inline_data: { mime_type: mimeType, data: base64 } }],
+      parts: [
+        { text: '请将这段音频转录成文字，只返回转录的原文，不要翻译或添加任何解释。' },
+        { inline_data: { mime_type: mimeType, data: base64 } },
+      ],
     }],
   };
   const res = await fetch(`${WORKER_URL}?model=gemini-2.0-flash&stream=false`, {
