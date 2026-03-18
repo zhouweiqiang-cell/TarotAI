@@ -9,6 +9,7 @@ import { analyzeSpreadStream } from '../services/tarotAnalyzer';
 import { drawRandom, SPREADS } from '../data/cards';
 import { COLORS, SUIT_COLORS } from '../constants/theme';
 import TarotCardImage from '../components/TarotCardImage';
+import FlipCard from '../components/FlipCard';
 import NebulaBackground from '../components/NebulaBackground';
 
 const WORKER_URL = 'https://tarot-proxy.zhouweiqiang.workers.dev/';
@@ -248,13 +249,15 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
               const isRevealed = revealed.includes(i);
               const suitColor = SUIT_COLORS[item.card.arcana] || COLORS.GOLD;
               return (
-                <TouchableOpacity key={i} style={styles.cardSlot} onPress={() => revealCard(i)} activeOpacity={0.8} disabled={isRevealed}>
-                  <TarotCardImage
-                    card={isRevealed ? item.card : null}
+                <View key={i} style={styles.cardSlot}>
+                  <FlipCard
+                    card={item.card}
                     isReversed={item.isReversed}
-                    showBack={!isRevealed}
+                    revealed={isRevealed}
+                    onPress={() => revealCard(i)}
                     width={90}
                     height={140}
+                    disabled={isRevealed}
                   />
                   {isRevealed && (
                     <View style={[styles.revealedBadge, { backgroundColor: suitColor + '22', borderColor: suitColor }]}>
@@ -265,7 +268,7 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
                     </View>
                   )}
                   <Text style={styles.cardPosition}>{item.position}</Text>
-                </TouchableOpacity>
+                </View>
               );
             })}
           </View>
