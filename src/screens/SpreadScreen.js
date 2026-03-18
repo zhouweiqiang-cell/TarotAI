@@ -9,6 +9,7 @@ import { analyzeSpreadStream } from '../services/tarotAnalyzer';
 import { drawRandom, SPREADS } from '../data/cards';
 import { COLORS, SUIT_COLORS } from '../constants/theme';
 import TarotCardImage from '../components/TarotCardImage';
+import NebulaBackground from '../components/NebulaBackground';
 
 const WORKER_URL = 'https://tarot-proxy.zhouweiqiang.workers.dev/';
 
@@ -279,11 +280,14 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.pageTitle}>{t.cardReading}</Text>
         {loading ? (
-          <View style={styles.loadingSection}>
-            <Text style={styles.loadingOrb}>✦</Text>
-            <Text style={styles.loadingText}>{t.readingLoading}</Text>
-            <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>
-          </View>
+          <>
+            <NebulaBackground />
+            <View style={styles.loadingSection}>
+              <Text style={styles.loadingOrb}>✦</Text>
+              <Text style={styles.loadingText}>{t.readingLoading}</Text>
+              <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>
+            </View>
+          </>
         ) : result ? (
           <>
             {/* Energy tags */}
