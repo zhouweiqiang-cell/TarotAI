@@ -61,6 +61,19 @@ const texts = {
     stylePractical:   '实用建议',
     stylePracticalDesc: '直接给出具体可操作的建议',
 
+    toneSection:  '沟通风格',
+    toneDesc:     '选择占卜师的说话方式',
+    toneFormal:      '📖 正式',
+    toneFormalDesc:   '专业严谨，学术化表达',
+    toneFriendly:    '💬 口语',
+    toneFriendlyDesc: '亲切易懂，像朋友聊天',
+    toneHumorous:    '😄 幽默',
+    toneHumorousDesc: '轻松诙谐，用比喻和段子',
+    toneBlunt:       '🗡️ 坦率',
+    toneBluntDesc:    '直言不讳，不绕弯子',
+    toneGentle:      '🌸 温柔',
+    toneGentleDesc:   '温暖鼓励，循循善诱',
+
     // Models
     modelPro:       '旗舰模型',
     modelProDesc:   'Gemini 3.1 Pro — 最深度的解读',
@@ -81,6 +94,9 @@ const texts = {
     energyTheme:   '能量主题',
     saveReading:   '保存记录',
     poweredBy:     '由 {model} 解读',
+    connections:   '牌间关联',
+    narrative:     '整体叙事',
+    caution:       '注意事项',
 
     // Errors
     errorNoQuestion: '请先输入你的问题',
@@ -89,36 +105,65 @@ const texts = {
     errorParse: '解读数据格式错误',
 
     // AI Prompt
-    buildPrompt: (question, cards, style) => {
+    buildPrompt: (question, cards, style, tone) => {
       const styleGuide = {
         mystical: '用神秘主义和占星学的语言，富有诗意和仪式感',
         psychological: '用荣格心理学和原型象征的角度，理性而深刻',
         practical: '直接、实用，给出具体可操作的建议',
       }[style] || '用神秘主义的语言';
 
-      const cardsDesc = cards.map(({ card, isReversed, position }) =>
-        `【${position}】${card.name.zh}（${isReversed ? '逆位' : '正位'}）`
-      ).join('\n');
+      const toneGuide = {
+        formal:   '请用专业严谨的书面语，措辞学术化',
+        friendly: '请用亲切随和的口语，像朋友之间聊天一样',
+        humorous: '请用轻松幽默的语气，多用生动的比喻和趣味表达',
+        blunt:    '请直言不讳，不要绕弯子，有什么说什么',
+        gentle:   '请用温柔鼓励的语气，温暖体贴，循循善诱',
+      }[tone] || '请用亲切随和的口语';
 
-      return `你是一位专业的塔罗占卜师。${styleGuide}地解读以下塔罗牌阵。
+      const cardsDesc = cards.map(({ card, isReversed, position }) => {
+        const lang = 'zh';
+        const lines = [`【${position}】${card.name.zh}（${isReversed ? '逆位' : '正位'}）`];
+        if (card.keywords?.[lang]) lines.push(`  关键词：${card.keywords[lang].join('、')}`);
+        if (card.meaning?.[lang]) {
+          const m = isReversed ? card.meaning[lang].reversed : card.meaning[lang].upright;
+          if (m) lines.push(`  牌义：${m}`);
+        }
+        if (card.element) lines.push(`  元素：${card.element}`);
+        if (card.astrology) lines.push(`  星座/行星：${card.astrology}`);
+        return lines.join('\n');
+      }).join('\n\n');
+
+      return `你是一位专业的塔罗占卜师。
+
+【解读流派】${styleGuide}。
+【沟通风格】${toneGuide}。
 
 用户的问题：${question || '请给予今日的综合指引'}
 
-抽到的牌阵：
+抽到的牌阵（含牌义参考）：
 ${cardsDesc}
 
-请以 JSON 格式返回解读，结构如下：
+解读要求：
+1. 每张牌的解读必须围绕用户的问题展开，不要泛泛而谈
+2. 分析牌与牌之间的关联和呼应（元素、能量、叙事逻辑）
+3. 综合所有牌给出一个连贯的整体叙事
+4. 可以引用牌的元素属性和星座对应来丰富解读
+
+请以 JSON 格式返回，结构如下：
 {
   "cardReadings": [
     {
       "cardId": "牌的id",
       "position": "位置名称",
       "isReversed": true/false,
-      "reading": "针对该位置的详细解读（2-4句话）"
+      "reading": "围绕用户问题的详细解读（3-5句话）"
     }
   ],
-  "overallMessage": "综合整体解读（3-5句话，呼应用户的问题）",
-  "advice": "具体的行动建议（1-3条）",
+  "connections": "牌间关联分析（哪些牌形成呼应、冲突或递进，2-3句话）",
+  "narrative": "整体叙事（将所有牌串成一个完整故事，围绕用户的问题，3-5句话）",
+  "overallMessage": "综合建议（呼应用户问题的核心回答，2-4句话）",
+  "advice": "具体的行动建议（2-3条，可操作的）",
+  "caution": "需要注意的事项或潜在风险（1-2句话）",
   "energy": ["能量关键词1", "能量关键词2", "能量关键词3"]
 }
 
@@ -143,6 +188,12 @@ ${cardsDesc}
     styleMystical: 'Mystical', styleMysticalDesc: 'Poetic, mysterious, ceremonial',
     stylePsychological: 'Psychological', stylePsychologicalDesc: 'Jungian archetypes and symbolism',
     stylePractical: 'Practical', stylePracticalDesc: 'Direct, actionable guidance',
+    toneSection: 'Tone', toneDesc: 'Choose how the reader speaks to you',
+    toneFormal: '📖 Formal', toneFormalDesc: 'Professional, academic style',
+    toneFriendly: '💬 Casual', toneFriendlyDesc: 'Friendly, like chatting with a friend',
+    toneHumorous: '😄 Humorous', toneHumorousDesc: 'Witty, fun metaphors and jokes',
+    toneBlunt: '🗡️ Blunt', toneBluntDesc: 'Straight to the point, no sugarcoating',
+    toneGentle: '🌸 Gentle', toneGentleDesc: 'Warm, encouraging and nurturing',
     modelPro: 'Flagship', modelProDesc: 'Gemini 3.1 Pro — Deepest interpretations',
     modelBalanced: 'Balanced', modelBalancedDesc: 'Gemini 3 Flash — Speed and depth',
     modelAccurate: 'Accurate', modelAccurateDesc: 'Gemini 2.5 Flash — Detailed analysis',
@@ -151,13 +202,22 @@ ${cardsDesc}
     modelGlm: 'GLM Vision', modelGlmDesc: 'GLM-4V Flash — Free vision model',
     cardReading: 'Card Reading', overallMessage: 'Overall Message', energyTheme: 'Energy Theme',
     saveReading: 'Save Reading', poweredBy: 'Interpreted by {model}',
+    connections: 'Card Connections', narrative: 'Story', caution: 'Caution',
     errorNoQuestion: 'Please enter your question', errorApiKey: 'API key not configured',
     errorNetwork: 'Network error, please try again', errorParse: 'Response format error',
 
-    buildPrompt: (question, cards, style) => {
+    buildPrompt: (question, cards, style, tone) => {
       const styleGuide = { mystical: 'Use mystical, poetic language', psychological: 'Use Jungian psychology and archetypes', practical: 'Be direct and practical' }[style] || 'Use mystical language';
-      const cardsDesc = cards.map(({ card, isReversed, position }) => `[${position}] ${card.name.en} (${isReversed ? 'Reversed' : 'Upright'})`).join('\n');
-      return `You are a professional tarot reader. ${styleGuide}.\n\nQuestion: ${question || 'Give general daily guidance'}\n\nSpread:\n${cardsDesc}\n\nReturn JSON:\n{\n  "cardReadings": [{"cardId": "...", "position": "...", "isReversed": true/false, "reading": "..."}],\n  "overallMessage": "...",\n  "advice": "...",\n  "energy": ["keyword1", "keyword2", "keyword3"]\n}\n\nReturn JSON only.`;
+      const toneGuide = { formal: 'Use formal, academic language', friendly: 'Use casual, conversational language like chatting with a friend', humorous: 'Use humor, vivid metaphors and witty expressions', blunt: 'Be blunt and straightforward, no sugarcoating', gentle: 'Be warm, encouraging and nurturing' }[tone] || 'Use casual, conversational language';
+      const cardsDesc = cards.map(({ card, isReversed, position }) => {
+        const lines = [`[${position}] ${card.name.en} (${isReversed ? 'Reversed' : 'Upright'})`];
+        if (card.keywords?.en) lines.push(`  Keywords: ${card.keywords.en.join(', ')}`);
+        if (card.meaning?.en) { const m = isReversed ? card.meaning.en.reversed : card.meaning.en.upright; if (m) lines.push(`  Meaning: ${m}`); }
+        if (card.element) lines.push(`  Element: ${card.element}`);
+        if (card.astrology) lines.push(`  Astrology: ${card.astrology}`);
+        return lines.join('\n');
+      }).join('\n\n');
+      return `You are a professional tarot reader.\n\n[Style] ${styleGuide}.\n[Tone] ${toneGuide}.\n\nQuestion: ${question || 'Give general daily guidance'}\n\nSpread (with card references):\n${cardsDesc}\n\nRequirements:\n1. Each card reading must relate to the user's question\n2. Analyze connections between cards (elements, energy, narrative)\n3. Weave all cards into a coherent overall narrative\n4. Reference elemental and astrological correspondences\n\nReturn JSON:\n{\n  "cardReadings": [{"cardId": "...", "position": "...", "isReversed": true/false, "reading": "3-5 sentences"}],\n  "connections": "Inter-card analysis (2-3 sentences)",\n  "narrative": "Overall story weaving all cards (3-5 sentences)",\n  "overallMessage": "Core answer to the question (2-4 sentences)",\n  "advice": "Actionable advice (2-3 items)",\n  "caution": "Potential risks or things to watch out for (1-2 sentences)",\n  "energy": ["keyword1", "keyword2", "keyword3"]\n}\n\nReturn JSON only.`;
     },
   },
 
@@ -178,6 +238,12 @@ ${cardsDesc}
     styleMystical: '神秘主義', styleMysticalDesc: '詩的で神秘的、儀式的',
     stylePsychological: '心理学的', stylePsychologicalDesc: 'ユング心理学とアーキタイプ',
     stylePractical: '実践的', stylePracticalDesc: '具体的で実用的なアドバイス',
+    toneSection: 'トーン', toneDesc: 'リーダーの話し方を選択',
+    toneFormal: '📖 フォーマル', toneFormalDesc: '専門的で学術的な表現',
+    toneFriendly: '💬 カジュアル', toneFriendlyDesc: '友達と話すような親しみやすさ',
+    toneHumorous: '😄 ユーモア', toneHumorousDesc: 'ウィットに富んだ楽しい表現',
+    toneBlunt: '🗡️ 率直', toneBluntDesc: '遠回しにせず、ストレートに',
+    toneGentle: '🌸 優しい', toneGentleDesc: '温かく励ますような口調',
     modelPro: 'フラッグシップ', modelProDesc: 'Gemini 3.1 Pro — 最も深い解釈',
     modelBalanced: 'バランス型', modelBalancedDesc: 'Gemini 3 Flash — 速さと深さのバランス',
     modelAccurate: '精密分析', modelAccurateDesc: 'Gemini 2.5 Flash — 詳細な分析',
@@ -186,12 +252,22 @@ ${cardsDesc}
     modelGlm: 'GLMビジョン', modelGlmDesc: 'GLM-4V Flash — 無料ビジョンモデル',
     cardReading: 'カード解釈', overallMessage: '総合メッセージ', energyTheme: 'エネルギーテーマ',
     saveReading: '記録を保存', poweredBy: '{model} による解釈',
+    connections: 'カード間の関連', narrative: 'ストーリー', caution: '注意事項',
     errorNoQuestion: '質問を入力してください', errorApiKey: 'APIキーが未設定です',
     errorNetwork: 'ネットワークエラー', errorParse: 'レスポンス形式エラー',
 
-    buildPrompt: (question, cards, style) => {
-      const cardsDesc = cards.map(({ card, isReversed, position }) => `【${position}】${card.name.ja}（${isReversed ? '逆位置' : '正位置'}）`).join('\n');
-      return `あなたはプロのタロットリーダーです。日本語で解釈してください。\n\n質問：${question || '今日の総合的なガイダンスをください'}\n\nスプレッド：\n${cardsDesc}\n\nJSON形式で返してください：\n{\n  "cardReadings": [{"cardId": "...", "position": "...", "isReversed": true/false, "reading": "..."}],\n  "overallMessage": "...",\n  "advice": "...",\n  "energy": ["キーワード1", "キーワード2", "キーワード3"]\n}\n\nJSONのみを返してください。`;
+    buildPrompt: (question, cards, style, tone) => {
+      const styleGuide = { mystical: '神秘的で詩的な言葉で', psychological: 'ユング心理学とアーキタイプの視点で', practical: '具体的で実践的なアドバイスを' }[style] || '神秘的な言葉で';
+      const toneGuide = { formal: '格式ばった学術的な表現で', friendly: '友達と話すようなカジュアルな口調で', humorous: 'ユーモアと比喩を使って楽しく', blunt: '率直に、遠回しにせず', gentle: '温かく励ますような優しい口調で' }[tone] || '友達と話すようなカジュアルな口調で';
+      const cardsDesc = cards.map(({ card, isReversed, position }) => {
+        const lines = [`【${position}】${card.name.ja}（${isReversed ? '逆位置' : '正位置'}）`];
+        if (card.keywords?.ja) lines.push(`  キーワード：${card.keywords.ja.join('、')}`);
+        if (card.meaning?.ja) { const m = isReversed ? card.meaning.ja.reversed : card.meaning.ja.upright; if (m) lines.push(`  意味：${m}`); }
+        if (card.element) lines.push(`  元素：${card.element}`);
+        if (card.astrology) lines.push(`  星座：${card.astrology}`);
+        return lines.join('\n');
+      }).join('\n\n');
+      return `あなたはプロのタロットリーダーです。\n\n【スタイル】${styleGuide}解釈してください。\n【トーン】${toneGuide}話してください。\n\n質問：${question || '今日の総合的なガイダンスをください'}\n\nスプレッド（カード情報付き）：\n${cardsDesc}\n\n要件：\n1. 各カードの解釈は質問に関連させること\n2. カード間の関連性を分析すること\n3. すべてのカードを一つの物語に織り込むこと\n4. 元素や星座の対応を引用すること\n\nJSON形式で返してください：\n{\n  "cardReadings": [{"cardId": "...", "position": "...", "isReversed": true/false, "reading": "3-5文"}],\n  "connections": "カード間の関連分析（2-3文）",\n  "narrative": "全体の物語（3-5文）",\n  "overallMessage": "総合メッセージ（2-4文）",\n  "advice": "具体的なアドバイス（2-3項目）",\n  "caution": "注意事項やリスク（1-2文）",\n  "energy": ["キーワード1", "キーワード2", "キーワード3"]\n}\n\nJSONのみを返してください。`;
     },
   },
 };

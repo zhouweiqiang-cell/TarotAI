@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS = {
   model: 'gemini-3.1-flash-lite-preview',
   language: 'zh',
   style: 'mystical', // 'mystical' | 'psychological' | 'practical'
+  tone: 'friendly',  // 'formal' | 'friendly' | 'humorous' | 'blunt' | 'gentle'
 };
 
 const VALID_MODELS = new Set([

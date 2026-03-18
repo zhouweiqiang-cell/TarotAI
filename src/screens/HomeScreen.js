@@ -19,10 +19,22 @@ function extractStreamingReadable(text) {
   if (overall) parts.push(overall[1]);
   const partialO = !overall && clean.match(/"overallMessage"\s*:\s*"((?:[^"\\]|\\.)*)$/);
   if (partialO) parts.push(partialO[1] + '...');
+  const conn = clean.match(/"connections"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (conn) parts.push(conn[1]);
+  const partialC = !conn && clean.match(/"connections"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialC) parts.push(partialC[1] + '...');
+  const narr = clean.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (narr) parts.push(narr[1]);
+  const partialN = !narr && clean.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialN) parts.push(partialN[1] + '...');
   const advice = clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)"/);
   if (advice) parts.push(advice[1]);
   const partialA = !advice && clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)$/);
   if (partialA) parts.push(partialA[1] + '...');
+  const caut = clean.match(/"caution"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (caut) parts.push(caut[1]);
+  const partialCaut = !caut && clean.match(/"caution"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialCaut) parts.push(partialCaut[1] + '...');
   return parts.join('\n\n').replace(/\\n/g, '\n').replace(/\\"/g, '"') || '星象正在汇聚...';
 }
 
@@ -63,7 +75,8 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
     try {
       const result = await analyzeSpreadStream(
         cards, '', settings.model, lang, settings.style,
-        (text) => setStreamingText(text)
+        (text) => setStreamingText(text),
+        settings.tone
       );
       setStreamingText('');
 
@@ -160,12 +173,36 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
                   </View>
                 )}
 
+                {/* Connections */}
+                {selectedReading.result?.connections ? (
+                  <View style={styles.detailSectionCard}>
+                    <Text style={styles.detailSectionLabel}>{t.connections || '牌间关联'}</Text>
+                    <Text style={styles.detailSectionText}>{selectedReading.result.connections}</Text>
+                  </View>
+                ) : null}
+
+                {/* Narrative */}
+                {selectedReading.result?.narrative ? (
+                  <View style={styles.detailSectionCard}>
+                    <Text style={styles.detailSectionLabel}>{t.narrative || '整体叙事'}</Text>
+                    <Text style={styles.detailSectionText}>{selectedReading.result.narrative}</Text>
+                  </View>
+                ) : null}
+
                 {/* Overall */}
                 <View style={styles.detailOverallCard}>
                   <Text style={styles.detailOverallLabel}>{t.overallMessage || '综合建议'}</Text>
                   <Text style={styles.detailOverallText}>{selectedReading.result?.overallMessage}</Text>
                   {selectedReading.result?.advice ? <Text style={styles.detailAdviceText}>{selectedReading.result.advice}</Text> : null}
                 </View>
+
+                {/* Caution */}
+                {selectedReading.result?.caution ? (
+                  <View style={styles.detailCautionCard}>
+                    <Text style={styles.detailCautionLabel}>{t.caution || '注意事项'}</Text>
+                    <Text style={styles.detailCautionText}>{selectedReading.result.caution}</Text>
+                  </View>
+                ) : null}
               </ScrollView>
             </SafeAreaView>
           )}
@@ -292,6 +329,12 @@ const styles = StyleSheet.create({
   detailCardState: { fontSize: 14, color: COLORS.TEXT_MUTED, marginBottom: 6 },
   detailCardReading: { fontSize: 15, color: COLORS.TEXT_PRIMARY, lineHeight: 24 },
   detailEnergyRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginVertical: 12 },
+  detailSectionCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.BORDER, gap: 8 },
+  detailSectionLabel: { fontSize: 13, color: COLORS.PRIMARY_LIGHT, fontWeight: '700', letterSpacing: 0.5 },
+  detailSectionText: { fontSize: 15, color: COLORS.TEXT_PRIMARY, lineHeight: 24 },
+  detailCautionCard: { backgroundColor: 'rgba(234,179,8,0.08)', borderRadius: 14, padding: 16, marginTop: 8, borderWidth: 1, borderColor: 'rgba(234,179,8,0.3)', gap: 8 },
+  detailCautionLabel: { fontSize: 13, color: '#EAB308', fontWeight: '700', letterSpacing: 0.5 },
+  detailCautionText: { fontSize: 15, color: COLORS.TEXT_SECONDARY, lineHeight: 24 },
   detailOverallCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 18, marginTop: 8, borderWidth: 1, borderColor: COLORS.BORDER_GOLD, gap: 10 },
   detailOverallLabel: { fontSize: 14, color: COLORS.GOLD, fontWeight: '700', letterSpacing: 1 },
   detailOverallText: { fontSize: 17, color: COLORS.TEXT_PRIMARY, lineHeight: 28 },

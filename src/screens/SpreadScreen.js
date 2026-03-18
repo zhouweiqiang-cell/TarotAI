@@ -29,11 +29,26 @@ function StreamingPreview({ text }) {
   if (overall) parts.push(overall[1]);
   const partialOverall = !overall && clean.match(/"overallMessage"\s*:\s*"((?:[^"\\]|\\.)*)$/);
   if (partialOverall) parts.push(partialOverall[1] + '...');
+  // Extract connections
+  const conn = clean.match(/"connections"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (conn) parts.push(conn[1]);
+  const partialConn = !conn && clean.match(/"connections"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialConn) parts.push(partialConn[1] + '...');
+  // Extract narrative
+  const narr = clean.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (narr) parts.push(narr[1]);
+  const partialNarr = !narr && clean.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialNarr) parts.push(partialNarr[1] + '...');
   // Extract advice
   const advice = clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)"/);
   if (advice) parts.push(advice[1]);
   const partialAdvice = !advice && clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)$/);
   if (partialAdvice) parts.push(partialAdvice[1] + '...');
+  // Extract caution
+  const caut = clean.match(/"caution"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (caut) parts.push(caut[1]);
+  const partialCaut = !caut && clean.match(/"caution"\s*:\s*"((?:[^"\\]|\\.)*)$/);
+  if (partialCaut) parts.push(partialCaut[1] + '...');
 
   const display = parts.join('\n\n').replace(/\\n/g, '\n').replace(/\\"/g, '"');
   if (!display) return <Text style={styles.loadingSubtext}>星象正在汇聚，请稍候...</Text>;
@@ -112,7 +127,8 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
     try {
       const res = await analyzeSpreadStream(
         drawnCards, question, settings.model, lang, settings.style,
-        (text) => setStreamingText(text)
+        (text) => setStreamingText(text),
+        settings.tone
       );
       setResult(res);
       setStreamingText('');
@@ -420,12 +436,36 @@ export default function SpreadScreen({ lang = 'zh', onNavigate }) {
               );
             })}
 
+            {/* Connections */}
+            {result.connections ? (
+              <View style={styles.sectionCard}>
+                <Text style={styles.sectionLabel}>{t.connections}</Text>
+                <Text style={styles.sectionText}>{result.connections}</Text>
+              </View>
+            ) : null}
+
+            {/* Narrative */}
+            {result.narrative ? (
+              <View style={styles.sectionCard}>
+                <Text style={styles.sectionLabel}>{t.narrative}</Text>
+                <Text style={styles.sectionText}>{result.narrative}</Text>
+              </View>
+            ) : null}
+
             {/* Overall message */}
             <View style={styles.overallCard}>
               <Text style={styles.overallLabel}>{t.overallMessage}</Text>
               <Text style={styles.overallText}>{result.overallMessage}</Text>
               {result.advice ? <Text style={styles.adviceText}>{result.advice}</Text> : null}
             </View>
+
+            {/* Caution */}
+            {result.caution ? (
+              <View style={styles.cautionCard}>
+                <Text style={styles.cautionLabel}>{t.caution}</Text>
+                <Text style={styles.cautionText}>{result.caution}</Text>
+              </View>
+            ) : null}
 
             <TouchableOpacity style={styles.resetBtn} onPress={reset} activeOpacity={0.8}>
               <Text style={styles.resetBtnText}>重新占卜</Text>
@@ -498,6 +538,12 @@ const styles = StyleSheet.create({
   overallLabel: { fontSize: 14, color: COLORS.GOLD, fontWeight: '700', letterSpacing: 1 },
   overallText: { fontSize: 17, color: COLORS.TEXT_PRIMARY, lineHeight: 28 },
   adviceText: { fontSize: 16, color: COLORS.TEXT_SECONDARY, lineHeight: 26 },
+  sectionCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.BORDER, gap: 8 },
+  sectionLabel: { fontSize: 13, color: COLORS.PRIMARY_LIGHT, fontWeight: '700', letterSpacing: 0.5 },
+  sectionText: { fontSize: 16, color: COLORS.TEXT_PRIMARY, lineHeight: 26 },
+  cautionCard: { backgroundColor: 'rgba(234,179,8,0.08)', borderRadius: 14, padding: 16, marginTop: 8, borderWidth: 1, borderColor: 'rgba(234,179,8,0.3)', gap: 8 },
+  cautionLabel: { fontSize: 13, color: '#EAB308', fontWeight: '700', letterSpacing: 0.5 },
+  cautionText: { fontSize: 16, color: COLORS.TEXT_SECONDARY, lineHeight: 26 },
   resetBtn: { marginTop: 24, borderRadius: 30, borderWidth: 1, borderColor: COLORS.BORDER, padding: 14, alignItems: 'center' },
   resetBtnText: { color: COLORS.TEXT_SECONDARY, fontSize: 17 },
 });

@@ -19,10 +19,19 @@ const STYLE_OPTIONS = [
   { id: 'practical',      textKey: 'stylePractical',      descKey: 'stylePracticalDesc' },
 ];
 
+const TONE_OPTIONS = [
+  { id: 'formal',    textKey: 'toneFormal',    descKey: 'toneFormalDesc' },
+  { id: 'friendly',  textKey: 'toneFriendly',  descKey: 'toneFriendlyDesc' },
+  { id: 'humorous',  textKey: 'toneHumorous',  descKey: 'toneHumorousDesc' },
+  { id: 'blunt',     textKey: 'toneBlunt',     descKey: 'toneBluntDesc' },
+  { id: 'gentle',    textKey: 'toneGentle',    descKey: 'toneGentleDesc' },
+];
+
 export default function SettingsScreen({ lang: propLang = 'zh', onLangChange }) {
   const [selectedModel, setSelectedModel] = useState('gemini-3.1-flash-lite-preview');
   const [selectedLang, setSelectedLang] = useState(propLang);
   const [selectedStyle, setSelectedStyle] = useState('mystical');
+  const [selectedTone, setSelectedTone] = useState('friendly');
   const t = getTexts(selectedLang);
 
   useEffect(() => {
@@ -31,6 +40,7 @@ export default function SettingsScreen({ lang: propLang = 'zh', onLangChange }) 
       setSelectedModel(s.model);
       setSelectedLang(s.language);
       setSelectedStyle(s.style || 'mystical');
+      setSelectedTone(s.tone || 'friendly');
     })();
   }, [propLang]);
 
@@ -46,6 +56,7 @@ export default function SettingsScreen({ lang: propLang = 'zh', onLangChange }) 
   const selectModel = async (id) => { setSelectedModel(id); await saveSettings({ model: id }); };
   const selectLang  = async (id) => { setSelectedLang(id);  await saveSettings({ language: id }); onLangChange?.(); };
   const selectStyle = async (id) => { setSelectedStyle(id); await saveSettings({ style: id }); };
+  const selectTone  = async (id) => { setSelectedTone(id);  await saveSettings({ tone: id }); };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -75,6 +86,24 @@ export default function SettingsScreen({ lang: propLang = 'zh', onLangChange }) 
           const sel = selectedStyle === opt.id;
           return (
             <TouchableOpacity key={opt.id} style={[styles.card, sel && styles.cardSelected]} onPress={() => selectStyle(opt.id)} activeOpacity={0.7}>
+              <View style={styles.row}>
+                <View style={styles.optInfo}>
+                  <Text style={[styles.optName, sel && styles.optNameSel]}>{t[opt.textKey]}</Text>
+                  <Text style={styles.optDesc}>{t[opt.descKey]}</Text>
+                </View>
+                <Radio selected={sel} />
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+
+        {/* Tone */}
+        <Text style={[styles.sectionTitle, { marginTop: 28 }]}>{t.toneSection}</Text>
+        <Text style={styles.sectionDesc}>{t.toneDesc}</Text>
+        {TONE_OPTIONS.map(opt => {
+          const sel = selectedTone === opt.id;
+          return (
+            <TouchableOpacity key={opt.id} style={[styles.card, sel && styles.cardSelected]} onPress={() => selectTone(opt.id)} activeOpacity={0.7}>
               <View style={styles.row}>
                 <View style={styles.optInfo}>
                   <Text style={[styles.optName, sel && styles.optNameSel]}>{t[opt.textKey]}</Text>

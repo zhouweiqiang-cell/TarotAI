@@ -107,19 +107,20 @@ function processOpenAISSE(buffer) {
  * @param {string} lang
  * @param {string} style - 'mystical' | 'psychological' | 'practical'
  * @param {Function} onText - streaming callback
+ * @param {string} tone - 'formal' | 'friendly' | 'humorous' | 'blunt' | 'gentle'
  */
-export function analyzeSpreadStream(cards, question, model, lang, style, onText) {
+export function analyzeSpreadStream(cards, question, model, lang, style, onText, tone) {
   const t = getTexts(lang);
-  const prompt = t.buildPrompt(question, cards, style);
+  const prompt = t.buildPrompt(question, cards, style, tone);
   const provider = getProvider(model);
   return provider === 'gemini'
     ? geminiStream(prompt, model, onText)
     : openaiStream(prompt, model, provider, onText);
 }
 
-export async function analyzeSpread(cards, question, model, lang, style) {
+export async function analyzeSpread(cards, question, model, lang, style, tone) {
   const t = getTexts(lang);
-  const prompt = t.buildPrompt(question, cards, style);
+  const prompt = t.buildPrompt(question, cards, style, tone);
   const provider = getProvider(model);
   return provider === 'gemini'
     ? geminiNonStream(prompt, model)
