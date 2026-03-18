@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Text, Animated, StyleSheet, Platform } from 'react-native';
 import { extractStreamingReadable } from '../utils/streamingParser';
+import { useTheme } from '../contexts/ThemeContext';
 
-export default function TypewriterLine({ streamingText, colors }) {
+export default function TypewriterLine({ streamingText }) {
+  const { colors } = useTheme();
   const [line, setLine] = useState('');
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const pointerRef = useRef(0);

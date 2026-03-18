@@ -7,9 +7,10 @@ import { getSettings } from '../services/settingsStorage';
 import { addReading } from '../services/historyStorage';
 import { analyzeSpreadStream } from '../services/tarotAnalyzer';
 import { drawRandom, SPREADS } from '../data/cards';
-import { getColors, CAUTION } from '../constants/theme';
+import { CAUTION } from '../constants/theme';
 import { extractStreamingReadable } from '../utils/streamingParser';
-import { getSuitColor } from '../utils/cardUtils';
+import { getSuitColorFromTheme } from '../utils/cardUtils';
+import { useTheme } from '../contexts/ThemeContext';
 import TarotCardImage from '../components/TarotCardImage';
 import FlipCard from '../components/FlipCard';
 import MatrixRain from '../components/MatrixRain';
@@ -42,10 +43,10 @@ async function transcribeAudio(base64, mimeType) {
   return data.candidates?.[0]?.content?.parts?.find(p => p.text && !p.thought)?.text || '';
 }
 
-export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate }) {
+export default function SpreadScreen({ lang = 'zh', onNavigate }) {
   const t = getTexts(lang);
-  const colors = useMemo(() => getColors(theme), [theme]);
-  const ds = useMemo(() => cs(colors), [theme]);
+  const { colors, suitColors, isDune } = useTheme();
+  const ds = useMemo(() => cs(colors), [colors]);
   const [step, setStep] = useState('select'); // 'select' | 'question' | 'draw' | 'reading'
   const [selectedSpread, setSelectedSpread] = useState(null);
   const [question, setQuestion] = useState('');
@@ -203,7 +204,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
   if (step === 'select') {
     return (
       <SafeAreaView style={ds.safe}>
-        {theme === 'dune' && <DuneBackground />}
+        {isDune && <DuneBackground />}
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
           <Text style={ds.pageTitle}>{t.spreadTitle}</Text>
           {Object.values(SPREADS).map(spread => (
@@ -228,7 +229,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
   if (step === 'question') {
     return (
       <SafeAreaView style={ds.safe}>
-        {theme === 'dune' && <DuneBackground />}
+        {isDune && <DuneBackground />}
         <View style={styles.content}>
           <TouchableOpacity onPress={() => setStep('select')}><Text style={ds.backBtn}>← {selectedSpread.name[lang]}</Text></TouchableOpacity>
           <Text style={ds.pageTitle}>{t.spreadQuestion}</Text>
@@ -256,7 +257,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
     const item = drawnCards[i];
     if (!item) return null;
     const isRevealed = revealed.includes(i);
-    const suitColor = getSuitColor(item.card, theme);
+    const suitColor = getSuitColorFromTheme(item.card, colors, suitColors);
     return (
       <View key={i} style={[styles.cardSlot, extraStyle]}>
         <FlipCard
@@ -267,7 +268,6 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
           width={width}
           height={height}
           disabled={isRevealed}
-          theme={theme}
         />
         {isRevealed && (
           <View style={[styles.revealedBadge, { backgroundColor: suitColor + '22', borderColor: suitColor }]}>
@@ -289,7 +289,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
 
     return (
       <SafeAreaView style={ds.safe}>
-        {theme === 'dune' && <DuneBackground />}
+        {isDune && <DuneBackground />}
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
           <Text style={ds.pageTitle}>{selectedSpread.name[lang]}</Text>
           <Text style={ds.subtitle}>{allRevealed ? t.readingLoading : t.drawCard}</Text>
@@ -353,8 +353,8 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
   // ─── Step: Reading Result ───
   return (
     <SafeAreaView style={ds.safe}>
-      {theme === 'dune' && <DuneBackground />}
-      {loading && (theme === 'dune'
+      {isDune && <DuneBackground />}
+      {loading && (isDune
         ? <MatrixRain streamingText={streamingText} colors={colors} />
         : <NebulaBackground />
       )}
@@ -365,12 +365,12 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
             <Text style={[styles.loadingOrb, { color: colors.GOLD }]}>✦</Text>
             <Text style={[styles.loadingText, { color: colors.TEXT_PRIMARY }]}>{t.readingLoading}</Text>
             <Text style={[styles.loadingSubtext, { color: colors.TEXT_MUTED }]}>星象正在汇聚，请稍候...</Text>
-            <TypewriterLine streamingText={streamingText} colors={colors} />
+            <TypewriterLine streamingText={streamingText} />
           </View>
         ) : result ? (
           <>
             {/* Energy tags */}
-            <EnergyTagRow energies={result.energy} style={{ marginBottom: 20 }} theme={theme} />
+            <EnergyTagRow energies={result.energy} style={{ marginBottom: 20 }} />
 
             {/* Card readings with images */}
             {result.cardReadings?.map((cr, i) => {
@@ -384,7 +384,6 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate
                   reading={cr.reading}
                   lang={lang}
                   t={t}
-                  theme={theme}
                 />
               );
             })}

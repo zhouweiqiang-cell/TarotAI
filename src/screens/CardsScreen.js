@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAreaView, Modal } from 'react-native';
 import { ALL_CARDS } from '../data/cards';
 import { getTexts } from '../services/i18n';
-import { getColors } from '../constants/theme';
-import { getSuitColor } from '../utils/cardUtils';
+import { useTheme } from '../contexts/ThemeContext';
+import { getSuitColorFromTheme } from '../utils/cardUtils';
 import TarotCardImage from '../components/TarotCardImage';
 import DuneBackground from '../components/DuneBackground';
 
@@ -32,10 +32,10 @@ const SUIT_LABELS = {
   ja: { major: '大アルカナ', wands: 'ワンド', cups: 'カップ', swords: 'ソード', pentacles: 'ペンタクル' },
 };
 
-export default function CardsScreen({ lang = 'zh', theme = 'cosmic' }) {
+export default function CardsScreen({ lang = 'zh' }) {
   const t = getTexts(lang);
-  const colors = useMemo(() => getColors(theme), [theme]);
-  const ds = useMemo(() => cs(colors), [theme]);
+  const { colors, suitColors, isDune } = useTheme();
+  const ds = useMemo(() => cs(colors), [colors]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [selected, setSelected] = useState(null);
@@ -53,7 +53,7 @@ export default function CardsScreen({ lang = 'zh', theme = 'cosmic' }) {
 
   return (
     <SafeAreaView style={ds.safe}>
-      {theme === 'dune' && <DuneBackground />}
+      {isDune && <DuneBackground />}
       <View style={styles.header}>
         <Text style={ds.pageTitle}>{t.cardsTitle}</Text>
         <TextInput
@@ -76,11 +76,11 @@ export default function CardsScreen({ lang = 'zh', theme = 'cosmic' }) {
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
         {filtered.map(card => {
-          const suitColor = getSuitColor(card, theme);
+          const suitColor = getSuitColorFromTheme(card, colors, suitColors);
           const name = card.name[lang] || card.name.zh;
           return (
             <TouchableOpacity key={card.id} style={ds.cardRow} onPress={() => setSelected(card)} activeOpacity={0.7}>
-              <TarotCardImage card={card} width={56} height={88} style={styles.cardThumb} theme={theme} />
+              <TarotCardImage card={card} width={56} height={88} style={styles.cardThumb} />
               <View style={styles.cardInfo}>
                 <Text style={ds.cardName}>{name}</Text>
                 <Text style={ds.cardKeywords}>{card.keywords.upright.slice(0, 3).join(' · ')}</Text>
@@ -116,7 +116,7 @@ export default function CardsScreen({ lang = 'zh', theme = 'cosmic' }) {
               <TouchableOpacity onPress={() => setSelected(null)} style={styles.closeBtn}>
                 <Text style={ds.closeBtnText}>✕</Text>
               </TouchableOpacity>
-              <TarotCardImage card={selected} width={120} height={190} style={styles.modalCardImg} theme={theme} />
+              <TarotCardImage card={selected} width={120} height={190} style={styles.modalCardImg} />
               <Text style={ds.detailName}>{selected.name[lang] || selected.name.zh}</Text>
               {(selected.element || selected.astrology) ? (
                 <View style={styles.detailMetaRow}>

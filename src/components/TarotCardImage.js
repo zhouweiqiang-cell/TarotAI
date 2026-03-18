@@ -1,11 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import Svg, { Rect, Path, Circle, Line } from 'react-native-svg';
-import { getColors, getSuitColors } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { getLocalCardImage } from '../data/cardImages';
 
-function CardBack({ width, height, colors, theme }) {
-  const isDune = theme === 'dune';
+function CardBack({ width, height, colors, isDune }) {
   const accent = isDune ? colors.GOLD : colors.PRIMARY;
   const accentLight = isDune ? colors.GOLD_LIGHT : colors.PRIMARY_LIGHT;
   const bg = colors.BG_CARD;
@@ -74,17 +73,16 @@ function CardBack({ width, height, colors, theme }) {
   );
 }
 
-export default function TarotCardImage({ card, isReversed = false, width = 100, height = 170, style, showBack = false, theme }) {
-  const colors = useMemo(() => getColors(theme), [theme]);
-  const sc = useMemo(() => getSuitColors(theme), [theme]);
-  const suitColor = card ? (sc[card.arcana] || colors.GOLD) : colors.PRIMARY;
+export default function TarotCardImage({ card, isReversed = false, width = 100, height = 170, style, showBack = false }) {
+  const { colors, suitColors, isDune } = useTheme();
+  const suitColor = card ? (suitColors[card.arcana] || colors.GOLD) : colors.PRIMARY;
   const imageSource = card ? getLocalCardImage(card) : null;
 
   return (
     <View style={[styles.container, { width, height, backgroundColor: colors.BG_CARD }, style]}>
       <View style={[styles.border, { borderColor: suitColor, width, height }]} />
       {showBack || !imageSource ? (
-        <CardBack width={width} height={height} colors={colors} theme={theme} />
+        <CardBack width={width} height={height} colors={colors} isDune={isDune} />
       ) : (
         <Image source={imageSource} style={[styles.image, isReversed && styles.reversed]} resizeMode="cover" />
       )}

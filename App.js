@@ -6,7 +6,7 @@ const RootView = Platform.OS === 'web' ? View : GestureHandlerRootView;
 import { StatusBar } from 'expo-status-bar';
 import { getSettings } from './src/services/settingsStorage';
 import { getTexts } from './src/services/i18n';
-import { getColors } from './src/constants/theme';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 
 import HomeScreen    from './src/screens/HomeScreen';
 import SpreadScreen  from './src/screens/SpreadScreen';
@@ -36,9 +36,6 @@ export default function App() {
   const [theme, setTheme] = useState('dune');
   const [t, setT] = useState(getTexts('zh'));
 
-  // Reading flow state — passed from SpreadScreen → HomeScreen-like reading view
-  const [pendingReading, setPendingReading] = useState(null);
-
   const refreshSettings = useCallback(async () => {
     const settings = await getSettings();
     setLang(settings.language);
@@ -53,7 +50,21 @@ export default function App() {
     refreshSettings();
   }, [refreshSettings]);
 
-  const colors = useMemo(() => getColors(theme), [theme]);
+  return (
+    <ThemeProvider theme={theme}>
+      <AppContent
+        activeTab={activeTab}
+        lang={lang}
+        t={t}
+        switchTab={switchTab}
+        refreshSettings={refreshSettings}
+      />
+    </ThemeProvider>
+  );
+}
+
+function AppContent({ activeTab, lang, t, switchTab, refreshSettings }) {
+  const { colors } = useTheme();
 
   const styles = useMemo(() => StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.BG_DEEP },
@@ -73,26 +84,26 @@ export default function App() {
       shadowOpacity: 0.5, shadowRadius: 10, elevation: 8,
     },
     spreadBtnActive: { backgroundColor: colors.GOLD },
-  }), [theme]);
+  }), [colors]);
 
   return (
     <RootView style={styles.root}>
       <StatusBar style="light" />
       <View style={styles.screenContainer}>
         {activeTab === 'home' && (
-          <HomeScreen lang={lang} theme={theme} onNavigate={switchTab} />
+          <HomeScreen lang={lang} onNavigate={switchTab} />
         )}
         {activeTab === 'spread' && (
-          <SpreadScreen lang={lang} theme={theme} onNavigate={switchTab} />
+          <SpreadScreen lang={lang} onNavigate={switchTab} />
         )}
         {activeTab === 'cards' && (
-          <CardsScreen lang={lang} theme={theme} />
+          <CardsScreen lang={lang} />
         )}
         {activeTab === 'history' && (
-          <HomeScreen lang={lang} theme={theme} showHistoryOnly onNavigate={switchTab} />
+          <HomeScreen lang={lang} showHistoryOnly onNavigate={switchTab} />
         )}
         {activeTab === 'settings' && (
-          <SettingsScreen lang={lang} theme={theme} onLangChange={refreshSettings} />
+          <SettingsScreen lang={lang} onLangChange={refreshSettings} />
         )}
       </View>
 

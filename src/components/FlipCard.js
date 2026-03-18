@@ -14,7 +14,7 @@ import TarotCardImage from './TarotCardImage';
  *   disabled   — disable touch
  *   delay      — stagger delay in ms (default 0)
  */
-export default function FlipCard({ card, isReversed, revealed, onPress, width = 90, height = 140, disabled, delay = 0, theme }) {
+export default function FlipCard({ card, isReversed, revealed, onPress, width = 90, height = 140, disabled, delay = 0 }) {
   const flipAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function FlipCard({ card, isReversed, revealed, onPress, width = 
           styles.face,
           { width, height, opacity: backOpacity, transform: [{ perspective: 800 }, { rotateY: backRotate }] },
         ]}>
-          <TarotCardImage showBack width={width} height={height} theme={theme} />
+          <TarotCardImage showBack width={width} height={height} />
         </Animated.View>
 
         {/* Front face */}
@@ -73,7 +73,7 @@ export default function FlipCard({ card, isReversed, revealed, onPress, width = 
           styles.face,
           { width, height, opacity: frontOpacity, transform: [{ perspective: 800 }, { rotateY: frontRotate }] },
         ]}>
-          <TarotCardImage card={card} isReversed={isReversed} width={width} height={height} theme={theme} />
+          <TarotCardImage card={card} isReversed={isReversed} width={width} height={height} />
         </Animated.View>
       </Animated.View>
     </TouchableOpacity>

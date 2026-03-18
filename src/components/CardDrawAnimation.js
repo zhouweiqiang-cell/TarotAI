@@ -13,7 +13,7 @@ const STACK_COUNT = 7;
  * 3. Card flips to reveal
  * 4. Card lands on the table with a bounce
  */
-export default function CardDrawAnimation({ card, isReversed, onComplete, theme }) {
+export default function CardDrawAnimation({ card, isReversed, onComplete }) {
   const [phase, setPhase] = useState('shuffle');
 
   // Shuffle anims for each card in the stack
@@ -133,7 +133,7 @@ export default function CardDrawAnimation({ card, isReversed, onComplete, theme 
                   { zIndex: i, transform: [{ translateX: a.x }, { translateY: a.y }, { rotate: rot }] },
                 ]}
               >
-                <TarotCardImage showBack width={CARD_W} height={CARD_H} theme={theme} />
+                <TarotCardImage showBack width={CARD_W} height={CARD_H} />
               </Animated.View>
             );
           })}
@@ -156,11 +156,11 @@ export default function CardDrawAnimation({ card, isReversed, onComplete, theme 
         >
           {/* Back */}
           <Animated.View style={[styles.face, { opacity: backOp, transform: [{ perspective: 800 }, { rotateY: backRotateY }, { scale: flipScale }] }]}>
-            <TarotCardImage showBack width={CARD_W} height={CARD_H} theme={theme} />
+            <TarotCardImage showBack width={CARD_W} height={CARD_H} />
           </Animated.View>
           {/* Front */}
           <Animated.View style={[styles.face, { opacity: frontOp, transform: [{ perspective: 800 }, { rotateY: frontRotateY }, { scale: flipScale }] }]}>
-            <TarotCardImage card={card} isReversed={isReversed} width={CARD_W} height={CARD_H} theme={theme} />
+            <TarotCardImage card={card} isReversed={isReversed} width={CARD_W} height={CARD_H} />
           </Animated.View>
         </Animated.View>
       )}

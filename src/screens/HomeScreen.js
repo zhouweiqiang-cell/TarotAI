@@ -5,7 +5,8 @@ import { getSettings } from '../services/settingsStorage';
 import { getTodayReading, getHistory, addReading, removeReading } from '../services/historyStorage';
 import { analyzeSpreadStream } from '../services/tarotAnalyzer';
 import { drawRandom, getCard, SPREADS } from '../data/cards';
-import { getColors, CAUTION } from '../constants/theme';
+import { CAUTION } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 import TarotCardImage from '../components/TarotCardImage';
 import EnergyTagRow from '../components/EnergyTagRow';
 import CardReadingBlock from '../components/CardReadingBlock';
@@ -13,10 +14,10 @@ import TypewriterLine from '../components/TypewriterLine';
 import CardDrawAnimation from '../components/CardDrawAnimation';
 import DuneBackground from '../components/DuneBackground';
 
-export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryOnly = false, onNavigate }) {
+export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNavigate }) {
   const t = getTexts(lang);
-  const colors = useMemo(() => getColors(theme), [theme]);
-  const ds = useMemo(() => cs(colors), [theme]);
+  const { colors, isDune } = useTheme();
+  const ds = useMemo(() => cs(colors), [colors]);
   const [todayCard, setTodayCard] = useState(null);   // { card, isReversed }
   const [todayReading, setTodayReading] = useState(null);
   const [history, setHistory] = useState([]);
@@ -110,7 +111,7 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
   if (showHistoryOnly) {
     return (
       <SafeAreaView style={ds.safe}>
-        {theme === 'dune' && <DuneBackground />}
+        {isDune && <DuneBackground />}
         <ScrollView style={styles.container}>
           <Text style={[ds.pageTitle, { padding: 20, paddingBottom: 0 }]}>{t.historyTitle}</Text>
           <View style={{ padding: 20 }}>
@@ -164,13 +165,12 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
                       lang={lang}
                       t={t}
                       size="compact"
-                      theme={theme}
                     />
                   );
                 })}
 
                 {/* Energy */}
-                <EnergyTagRow energies={selectedReading.result?.energy} style={{ marginVertical: 12 }} theme={theme} />
+                <EnergyTagRow energies={selectedReading.result?.energy} style={{ marginVertical: 12 }} />
 
                 {/* Connections */}
                 {selectedReading.result?.connections ? (
@@ -212,7 +212,7 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
 
   return (
     <SafeAreaView style={ds.safe}>
-      {theme === 'dune' && <DuneBackground />}
+      {isDune && <DuneBackground />}
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={ds.pageTitle}>{t.dailyTitle}</Text>
         <Text style={ds.subtitle}>{t.dailySubtitle}</Text>
@@ -222,7 +222,7 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
             {/* Before draw: show card back + draw button */}
             {!animating && (
               <>
-                <TarotCardImage showBack width={120} height={200} theme={theme} />
+                <TarotCardImage showBack width={120} height={200} />
                 <TouchableOpacity style={ds.drawBtn} onPress={handleDailyDraw} activeOpacity={0.8}>
                   <Text style={ds.drawBtnText}>{t.dailyDraw}</Text>
                 </TouchableOpacity>
@@ -235,7 +235,6 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
                   card={todayCard.card}
                   isReversed={todayCard.isReversed}
                   onComplete={onAnimComplete}
-                  theme={theme}
                 />
                 {animDone && loading && (
                   <Text style={ds.interpretingText}>{'✦ ' + (t.interpreting || '正在解读...')}</Text>
@@ -243,7 +242,7 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
               </>
             )}
             {loading && streamingText ? (
-              <TypewriterLine streamingText={streamingText} colors={colors} />
+              <TypewriterLine streamingText={streamingText} />
             ) : null}
           </View>
         ) : (
@@ -256,13 +255,12 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
                   isReversed={todayCard.isReversed}
                   width={100}
                   height={160}
-                  theme={theme}
                 />
                 <View style={styles.resultCardInfo}>
                   <Text style={ds.sectionLabel}>{t.alreadyDrawn}</Text>
                   <Text style={ds.todayCardName}>{todayCard.card.name[lang]}</Text>
                   <Text style={ds.todayCardState}>{todayCard.isReversed ? t.reversed : t.upright}</Text>
-                  <EnergyTagRow energies={todayReading.result?.energy} style={{ marginTop: 4 }} theme={theme} />
+                  <EnergyTagRow energies={todayReading.result?.energy} style={{ marginTop: 4 }} />
                 </View>
               </View>
             )}

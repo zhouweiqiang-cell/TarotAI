@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { getColors } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
-export default function EnergyTagRow({ energies, style, theme }) {
+export default function EnergyTagRow({ energies, style }) {
+  const { colors } = useTheme();
   if (!energies?.length) return null;
-  const colors = useMemo(() => getColors(theme), [theme]);
   return (
     <View style={[styles.row, style]}>
       {energies.map((e, i) => (

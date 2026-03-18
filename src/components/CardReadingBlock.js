@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { getColors } from '../constants/theme';
-import { getSuitColor } from '../utils/cardUtils';
+import { useTheme } from '../contexts/ThemeContext';
+import { getSuitColorFromTheme } from '../utils/cardUtils';
 import TarotCardImage from './TarotCardImage';
 
-export default function CardReadingBlock({ card, isReversed, position, reading, lang, t, size = 'default', theme }) {
-  const colors = useMemo(() => getColors(theme), [theme]);
-  const suitColor = getSuitColor(card, theme);
+export default function CardReadingBlock({ card, isReversed, position, reading, lang, t, size = 'default' }) {
+  const { colors, suitColors } = useTheme();
+  const suitColor = getSuitColorFromTheme(card, colors, suitColors);
   const imgW = size === 'compact' ? 60 : 70;
   const imgH = size === 'compact' ? 95 : 110;
 
@@ -14,7 +14,7 @@ export default function CardReadingBlock({ card, isReversed, position, reading, 
     <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER, borderLeftColor: suitColor }]}>
       <View style={styles.top}>
         {card && (
-          <TarotCardImage card={card} isReversed={isReversed} width={imgW} height={imgH} style={styles.img} theme={theme} />
+          <TarotCardImage card={card} isReversed={isReversed} width={imgW} height={imgH} style={styles.img} />
         )}
         <View style={styles.meta}>
           <Text style={[styles.position, { color: suitColor }]}>{position}</Text>

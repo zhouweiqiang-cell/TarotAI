@@ -4,6 +4,8 @@ import { getSettings, saveSettings } from '../services/settingsStorage';
 import { getTexts, LANGUAGE_OPTIONS } from '../services/i18n';
 import { getColors } from '../constants/theme';
 import DuneBackground from '../components/DuneBackground';
+// Note: SettingsScreen uses getColors(selectedTheme) directly for live preview
+// instead of useTheme(), since selectedTheme may differ from the app-wide theme
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -34,12 +36,12 @@ const THEME_OPTIONS = [
   { id: 'dune',   textKey: 'themeDune',   descKey: 'themeDuneDesc' },
 ];
 
-export default function SettingsScreen({ lang: propLang = 'zh', theme = 'cosmic', onLangChange }) {
+export default function SettingsScreen({ lang: propLang = 'zh', onLangChange }) {
   const [selectedModel, setSelectedModel] = useState('gemini-3.1-flash-lite-preview');
   const [selectedLang, setSelectedLang] = useState(propLang);
   const [selectedStyle, setSelectedStyle] = useState('mystical');
   const [selectedTone, setSelectedTone] = useState('friendly');
-  const [selectedTheme, setSelectedTheme] = useState(theme);
+  const [selectedTheme, setSelectedTheme] = useState('dune');
   const [openSection, setOpenSection] = useState(null);
   const t = getTexts(selectedLang);
   const colors = useMemo(() => getColors(selectedTheme), [selectedTheme]);
