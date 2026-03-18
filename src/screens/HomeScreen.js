@@ -228,21 +228,17 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
                 </TouchableOpacity>
               </>
             )}
-            {/* During draw: shuffle → flip → land animation */}
-            {animating && !animDone && todayCard && (
-              <CardDrawAnimation
-                card={todayCard.card}
-                isReversed={todayCard.isReversed}
-                onComplete={onAnimComplete}
-                theme={theme}
-              />
-            )}
-            {/* After animation: show the landed card + AI reading */}
-            {animDone && todayCard && (
+            {/* Draw animation — stays mounted after completion so card doesn't jump */}
+            {animating && todayCard && (
               <>
-                <TarotCardImage card={todayCard.card} isReversed={todayCard.isReversed} width={100} height={160} theme={theme} />
-                {loading && (
-                  <Text style={ds.drawBtnText}>{'✦ ' + (t.interpreting || '正在解读...')}</Text>
+                <CardDrawAnimation
+                  card={todayCard.card}
+                  isReversed={todayCard.isReversed}
+                  onComplete={onAnimComplete}
+                  theme={theme}
+                />
+                {animDone && loading && (
+                  <Text style={ds.interpretingText}>{'✦ ' + (t.interpreting || '正在解读...')}</Text>
                 )}
               </>
             )}
@@ -317,6 +313,7 @@ function cs(colors) {
     todayCardState: { fontSize: 15, color: colors.TEXT_SECONDARY },
     overallMessage: { fontSize: 17, color: colors.TEXT_PRIMARY, lineHeight: 28 },
     advice: { fontSize: 16, color: colors.TEXT_SECONDARY, lineHeight: 26 },
+    interpretingText: { color: colors.TEXT_MUTED, fontSize: 15, fontWeight: '600', marginTop: 16, textAlign: 'center' },
     redrawBtn: {
       marginTop: 20, alignSelf: 'center', paddingHorizontal: 24, paddingVertical: 10,
       borderRadius: 20, borderWidth: 1, borderColor: colors.BORDER,
