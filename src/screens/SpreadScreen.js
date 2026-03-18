@@ -17,76 +17,9 @@ import NebulaBackground from '../components/NebulaBackground';
 import DuneBackground from '../components/DuneBackground';
 import EnergyTagRow from '../components/EnergyTagRow';
 import CardReadingBlock from '../components/CardReadingBlock';
+import TypewriterLine from '../components/TypewriterLine';
 
 const WORKER_URL = 'https://tarot-proxy.zhouweiqiang.workers.dev/';
-
-// Typewriter: one char at a time, fill → fade → next line
-function TypewriterLine({ streamingText, colors }) {
-  const [line, setLine] = useState('');
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const pointerRef = useRef(0);   // position in source text
-  const sourceRef = useRef('');
-  const fadingRef = useRef(false);
-
-  // Keep source up to date from streaming
-  useEffect(() => {
-    const readable = extractStreamingReadable(streamingText, '');
-    if (readable && readable.length > sourceRef.current.length) {
-      sourceRef.current = readable;
-    }
-  }, [streamingText]);
-
-  // Typing loop
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (fadingRef.current) return;
-      const src = sourceRef.current;
-      if (!src || pointerRef.current >= src.length) return;
-
-      pointerRef.current++;
-      const idx = pointerRef.current;
-      // Show a sliding window — keep last ~35 chars visible
-      const windowStart = Math.max(0, idx - 35);
-      const text = src.slice(windowStart, idx);
-      setLine(text);
-
-      // When line is long enough and hits punctuation, fade out
-      const lastChar = src[idx - 1];
-      const isPunct = '，。！？、；：…\n'.includes(lastChar);
-      if ((isPunct && text.length >= 18) || text.length >= 35) {
-        fadingRef.current = true;
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }).start(() => {
-          setLine('');
-          fadeAnim.setValue(1);
-          fadingRef.current = false;
-        });
-      }
-    }, 55);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  if (!line) return null;
-
-  return (
-    <Animated.View style={[twStyles.container, { opacity: fadeAnim }]}>
-      <Text style={[twStyles.text, { color: colors.GOLD }]}>
-        {line}
-        <Text style={[twStyles.cursor, { color: colors.GOLD }]}>▎</Text>
-      </Text>
-    </Animated.View>
-  );
-}
-
-const twStyles = StyleSheet.create({
-  container: { marginTop: 24, paddingHorizontal: 16, alignItems: 'center' },
-  text: { fontSize: 16, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', lineHeight: 24, textAlign: 'center' },
-  cursor: { opacity: 0.5 },
-});
 
 async function transcribeAudio(base64, mimeType) {
   const body = {

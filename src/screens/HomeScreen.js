@@ -6,10 +6,10 @@ import { getTodayReading, getHistory, addReading, removeReading } from '../servi
 import { analyzeSpreadStream } from '../services/tarotAnalyzer';
 import { drawRandom, getCard, SPREADS } from '../data/cards';
 import { getColors, CAUTION } from '../constants/theme';
-import { extractStreamingReadable } from '../utils/streamingParser';
 import TarotCardImage from '../components/TarotCardImage';
 import EnergyTagRow from '../components/EnergyTagRow';
 import CardReadingBlock from '../components/CardReadingBlock';
+import TypewriterLine from '../components/TypewriterLine';
 import DuneBackground from '../components/DuneBackground';
 
 export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryOnly = false, onNavigate }) {
@@ -211,9 +211,7 @@ export default function HomeScreen({ lang = 'zh', theme = 'cosmic', showHistoryO
               <Text style={ds.drawBtnText}>{loading ? '✦ 正在解读...' : t.dailyDraw}</Text>
             </TouchableOpacity>
             {loading && streamingText ? (
-              <Text style={ds.streamingText}>
-                {extractStreamingReadable(streamingText)}
-              </Text>
+              <TypewriterLine streamingText={streamingText} colors={colors} />
             ) : null}
           </View>
         ) : (
