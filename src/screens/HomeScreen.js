@@ -5,38 +5,11 @@ import { getSettings } from '../services/settingsStorage';
 import { getTodayReading, getHistory, addReading, removeReading } from '../services/historyStorage';
 import { analyzeSpreadStream } from '../services/tarotAnalyzer';
 import { drawRandom, getCard, SPREADS } from '../data/cards';
-import { COLORS } from '../constants/theme';
+import { COLORS, CAUTION, BASE_STYLES } from '../constants/theme';
+import { extractStreamingReadable } from '../utils/streamingParser';
 import TarotCardImage from '../components/TarotCardImage';
-
-function extractStreamingReadable(text) {
-  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-  const parts = [];
-  const readings = [...clean.matchAll(/"reading"\s*:\s*"((?:[^"\\]|\\.)*)"/g)];
-  readings.forEach(m => parts.push(m[1]));
-  const partial = clean.match(/"reading"\s*:\s*"((?:[^"\\]|\\.)*)$/);
-  if (partial) parts.push(partial[1] + '...');
-  const overall = clean.match(/"overallMessage"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  if (overall) parts.push(overall[1]);
-  const partialO = !overall && clean.match(/"overallMessage"\s*:\s*"((?:[^"\\]|\\.)*)$/);
-  if (partialO) parts.push(partialO[1] + '...');
-  const conn = clean.match(/"connections"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  if (conn) parts.push(conn[1]);
-  const partialC = !conn && clean.match(/"connections"\s*:\s*"((?:[^"\\]|\\.)*)$/);
-  if (partialC) parts.push(partialC[1] + '...');
-  const narr = clean.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  if (narr) parts.push(narr[1]);
-  const partialN = !narr && clean.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)$/);
-  if (partialN) parts.push(partialN[1] + '...');
-  const advice = clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  if (advice) parts.push(advice[1]);
-  const partialA = !advice && clean.match(/"advice"\s*:\s*"((?:[^"\\]|\\.)*)$/);
-  if (partialA) parts.push(partialA[1] + '...');
-  const caut = clean.match(/"caution"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  if (caut) parts.push(caut[1]);
-  const partialCaut = !caut && clean.match(/"caution"\s*:\s*"((?:[^"\\]|\\.)*)$/);
-  if (partialCaut) parts.push(partialCaut[1] + '...');
-  return parts.join('\n\n').replace(/\\n/g, '\n').replace(/\\"/g, '"') || '星象正在汇聚...';
-}
+import EnergyTagRow from '../components/EnergyTagRow';
+import CardReadingBlock from '../components/CardReadingBlock';
 
 export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNavigate }) {
   const t = getTexts(lang);
@@ -152,26 +125,21 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
                   const card = getCard(c.cardId);
                   const cr = selectedReading.result?.cardReadings?.[i];
                   return (
-                    <View key={i} style={styles.detailCardRow}>
-                      {card && <TarotCardImage card={card} isReversed={c.isReversed} width={60} height={95} style={{ marginRight: 12, borderRadius: 8 }} />}
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.detailCardPos}>{c.position || cr?.position}</Text>
-                        <Text style={styles.detailCardName}>{card?.name[lang] || c.cardId}</Text>
-                        <Text style={styles.detailCardState}>{c.isReversed ? t.reversed : t.upright}</Text>
-                        {cr?.reading ? <Text style={styles.detailCardReading}>{cr.reading}</Text> : null}
-                      </View>
-                    </View>
+                    <CardReadingBlock
+                      key={i}
+                      card={card}
+                      isReversed={c.isReversed}
+                      position={c.position || cr?.position}
+                      reading={cr?.reading}
+                      lang={lang}
+                      t={t}
+                      size="compact"
+                    />
                   );
                 })}
 
                 {/* Energy */}
-                {selectedReading.result?.energy?.length > 0 && (
-                  <View style={styles.detailEnergyRow}>
-                    {selectedReading.result.energy.map((e, i) => (
-                      <View key={i} style={styles.energyPill}><Text style={styles.energyText}>{e}</Text></View>
-                    ))}
-                  </View>
-                )}
+                <EnergyTagRow energies={selectedReading.result?.energy} style={{ marginVertical: 12 }} />
 
                 {/* Connections */}
                 {selectedReading.result?.connections ? (
@@ -252,13 +220,7 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
                   <Text style={styles.sectionLabel}>{t.alreadyDrawn}</Text>
                   <Text style={styles.todayCardName}>{todayCard.card.name[lang]}</Text>
                   <Text style={styles.todayCardState}>{todayCard.isReversed ? t.reversed : t.upright}</Text>
-                  <View style={styles.energyRow}>
-                    {todayReading.result?.energy?.map((e, i) => (
-                      <View key={i} style={styles.energyPill}>
-                        <Text style={styles.energyText}>{e}</Text>
-                      </View>
-                    ))}
-                  </View>
+                  <EnergyTagRow energies={todayReading.result?.energy} style={{ marginTop: 4 }} />
                 </View>
               </View>
             )}
@@ -276,10 +238,10 @@ export default function HomeScreen({ lang = 'zh', showHistoryOnly = false, onNav
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.BG_PAGE },
-  container: { flex: 1 },
+  safe: BASE_STYLES.safe,
+  container: BASE_STYLES.container,
   content: { padding: 20, paddingBottom: 40 },
-  pageTitle: { fontSize: 28, fontWeight: '800', color: COLORS.GOLD, marginBottom: 6 },
+  pageTitle: BASE_STYLES.pageTitle,
   subtitle: { fontSize: 16, color: COLORS.TEXT_SECONDARY, marginBottom: 32 },
   drawSection: { alignItems: 'center', gap: 24 },
   drawBtn: {
@@ -294,9 +256,6 @@ const styles = StyleSheet.create({
   sectionLabel: { fontSize: 14, color: COLORS.TEXT_MUTED },
   todayCardName: { fontSize: 22, fontWeight: '800', color: COLORS.GOLD },
   todayCardState: { fontSize: 15, color: COLORS.TEXT_SECONDARY },
-  energyRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 },
-  energyPill: { backgroundColor: COLORS.BG_CARD, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.BORDER_GOLD },
-  energyText: { color: COLORS.GOLD, fontSize: 14, fontWeight: '600' },
   overallMessage: { fontSize: 17, color: COLORS.TEXT_PRIMARY, lineHeight: 28 },
   advice: { fontSize: 16, color: COLORS.TEXT_SECONDARY, lineHeight: 26 },
   spreadCTA: {
@@ -323,17 +282,11 @@ const styles = StyleSheet.create({
   detailDate: { fontSize: 14, color: COLORS.TEXT_MUTED, marginBottom: 4 },
   detailSpread: { fontSize: 22, fontWeight: '800', color: COLORS.GOLD, marginBottom: 8 },
   detailQuestion: { fontSize: 16, color: COLORS.TEXT_SECONDARY, fontStyle: 'italic', marginBottom: 20, lineHeight: 24 },
-  detailCardRow: { flexDirection: 'row', backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: COLORS.BORDER },
-  detailCardPos: { fontSize: 13, fontWeight: '700', color: COLORS.GOLD, letterSpacing: 0.5, marginBottom: 4 },
-  detailCardName: { fontSize: 17, fontWeight: '700', color: COLORS.TEXT_PRIMARY, marginBottom: 2 },
-  detailCardState: { fontSize: 14, color: COLORS.TEXT_MUTED, marginBottom: 6 },
-  detailCardReading: { fontSize: 15, color: COLORS.TEXT_PRIMARY, lineHeight: 24 },
-  detailEnergyRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginVertical: 12 },
   detailSectionCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.BORDER, gap: 8 },
   detailSectionLabel: { fontSize: 13, color: COLORS.PRIMARY_LIGHT, fontWeight: '700', letterSpacing: 0.5 },
   detailSectionText: { fontSize: 15, color: COLORS.TEXT_PRIMARY, lineHeight: 24 },
-  detailCautionCard: { backgroundColor: 'rgba(234,179,8,0.08)', borderRadius: 14, padding: 16, marginTop: 8, borderWidth: 1, borderColor: 'rgba(234,179,8,0.3)', gap: 8 },
-  detailCautionLabel: { fontSize: 13, color: '#EAB308', fontWeight: '700', letterSpacing: 0.5 },
+  detailCautionCard: { backgroundColor: CAUTION.BG, borderRadius: 14, padding: 16, marginTop: 8, borderWidth: 1, borderColor: CAUTION.BORDER, gap: 8 },
+  detailCautionLabel: { fontSize: 13, color: CAUTION.TEXT, fontWeight: '700', letterSpacing: 0.5 },
   detailCautionText: { fontSize: 15, color: COLORS.TEXT_SECONDARY, lineHeight: 24 },
   detailOverallCard: { backgroundColor: COLORS.BG_CARD, borderRadius: 14, padding: 18, marginTop: 8, borderWidth: 1, borderColor: COLORS.BORDER_GOLD, gap: 10 },
   detailOverallLabel: { fontSize: 14, color: COLORS.GOLD, fontWeight: '700', letterSpacing: 1 },

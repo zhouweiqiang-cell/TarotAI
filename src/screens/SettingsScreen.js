@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
 import { getSettings, saveSettings } from '../services/settingsStorage';
 import { getTexts, LANGUAGE_OPTIONS } from '../services/i18n';
-import { COLORS } from '../constants/theme';
+import { COLORS, BASE_STYLES } from '../constants/theme';
 
 const MODEL_OPTIONS = [
   { id: 'gemini-3.1-flash-lite-preview', icon: '⚡' },
@@ -148,7 +148,7 @@ function Radio({ selected }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.BG_PAGE },
+  safe: BASE_STYLES.safe,
   container: { flex: 1, padding: 20 },
   title: { fontSize: 26, fontWeight: '800', color: COLORS.GOLD, marginBottom: 28, textAlign: 'center' },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.TEXT_PRIMARY, marginBottom: 4 },

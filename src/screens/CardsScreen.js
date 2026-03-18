@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAr
 import { ALL_CARDS } from '../data/cards';
 import { getTexts } from '../services/i18n';
 import { COLORS, SUIT_COLORS, SUIT_LABELS } from '../constants/theme';
+import { getSuitColor } from '../utils/cardUtils';
 import TarotCardImage from '../components/TarotCardImage';
 
 const FILTER_SUITS = ['all', 'major', 'wands', 'cups', 'swords', 'pentacles'];
@@ -65,7 +66,7 @@ export default function CardsScreen({ lang = 'zh' }) {
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
         {filtered.map(card => {
-          const suitColor = SUIT_COLORS[card.arcana] || COLORS.GOLD;
+          const suitColor = getSuitColor(card);
           const name = card.name[lang] || card.name.zh;
           return (
             <TouchableOpacity key={card.id} style={styles.cardRow} onPress={() => setSelected(card)} activeOpacity={0.7}>

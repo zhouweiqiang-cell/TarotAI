@@ -38,6 +38,20 @@ export const SUIT_COLORS = {
   pentacles: COLORS.PENTACLES,
 };
 
+// Caution / warning colors
+export const CAUTION = {
+  BG:     'rgba(234,179,8,0.08)',
+  BORDER: 'rgba(234,179,8,0.3)',
+  TEXT:   '#EAB308',
+};
+
+// Shared base styles reused across screens
+export const BASE_STYLES = {
+  safe:      { flex: 1, backgroundColor: COLORS.BG_PAGE },
+  container: { flex: 1 },
+  pageTitle: { fontSize: 28, fontWeight: '800', color: COLORS.GOLD, marginBottom: 8 },
+};
+
 export const SUIT_LABELS = {
   zh: { major: '大阿卡纳', wands: '权杖', cups: '圣杯', swords: '宝剑', pentacles: '星币' },
   en: { major: 'Major Arcana', wands: 'Wands', cups: 'Cups', swords: 'Swords', pentacles: 'Pentacles' },
