@@ -14,11 +14,13 @@ import CardsScreen   from './src/screens/CardsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 
 // ─── Tab Icon components ───────────────────────────────
-const SunIcon    = ({ color }) => <Text style={{ fontSize: 22, color }}>☼</Text>;
-const OrbIcon    = ({ color }) => <Text style={{ fontSize: 22, color }}>◇</Text>;
-const BookIcon   = ({ color }) => <Text style={{ fontSize: 22, color }}>☰</Text>;
-const ScrollIcon = ({ color }) => <Text style={{ fontSize: 22, color }}>⧖</Text>;
-const GearIcon   = ({ color }) => <Text style={{ fontSize: 22, color }}>⟐</Text>;
+const TabIcon = ({ color, children }) => <Text style={[iconStyle, { color }]}>{children}</Text>;
+const iconStyle = { fontSize: 24 };
+const SunIcon    = ({ color }) => <TabIcon color={color}>☼</TabIcon>;
+const OrbIcon    = ({ color }) => <TabIcon color={color}>◇</TabIcon>;
+const BookIcon   = ({ color }) => <TabIcon color={color}>☰</TabIcon>;
+const ScrollIcon = ({ color }) => <TabIcon color={color}>⧖</TabIcon>;
+const GearIcon   = ({ color }) => <TabIcon color={color}>⟐</TabIcon>;
 
 const TABS = [
   { id: 'home',     textKey: 'tabHome',     Icon: SunIcon },
@@ -62,7 +64,7 @@ export default function App() {
       paddingBottom: 24, paddingTop: 10, alignItems: 'flex-end',
     },
     tab: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    tabLabel: { fontSize: 10, color: colors.TEXT_MUTED, marginTop: 4, fontWeight: '500' },
+    tabLabel: { fontSize: 12, color: colors.TEXT_MUTED, marginTop: 4, fontWeight: '500' },
     tabLabelActive: { color: colors.GOLD, fontWeight: '700' },
     spreadBtn: {
       width: 52, height: 52, borderRadius: 26, backgroundColor: colors.PRIMARY,
