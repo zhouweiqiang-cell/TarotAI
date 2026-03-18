@@ -1,21 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { Text, Animated, StyleSheet, Platform } from 'react-native';
 import { extractStreamingReadable } from '../utils/streamingParser';
 import { useTheme } from '../contexts/ThemeContext';
 
-const LINE_WIDTH = 24;
-const MAX_LINES = 5;
-const CHARS_PER_TICK = 3;
-const TICK = 45;
-
 export default function TypewriterLine({ streamingText }) {
   const { colors } = useTheme();
-  const [lines, setLines] = useState([]);
+  const [line, setLine] = useState('');
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   const pointerRef = useRef(0);
   const sourceRef = useRef('');
-  const linesRef = useRef([]);
-  const currentLineRef = useRef('');
+  const fadingRef = useRef(false);
 
+  // Keep source up to date from streaming
   useEffect(() => {
     const readable = extractStreamingReadable(streamingText, '');
     if (readable && readable.length > sourceRef.current.length) {
@@ -23,57 +19,52 @@ export default function TypewriterLine({ streamingText }) {
     }
   }, [streamingText]);
 
+  // Typing loop
   useEffect(() => {
     const interval = setInterval(() => {
+      if (fadingRef.current) return;
       const src = sourceRef.current;
-      if (!src) return;
+      if (!src || pointerRef.current >= src.length) return;
 
-      if (pointerRef.current >= src.length) {
-        pointerRef.current = 0;
-        linesRef.current = [];
-        currentLineRef.current = '';
+      pointerRef.current++;
+      const idx = pointerRef.current;
+      const windowStart = Math.max(0, idx - 35);
+      const text = src.slice(windowStart, idx);
+      setLine(text);
+
+      const lastChar = src[idx - 1];
+      const isPunct = '，。！？、；：…\n'.includes(lastChar);
+      if ((isPunct && text.length >= 18) || text.length >= 35) {
+        fadingRef.current = true;
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }).start(() => {
+          setLine('');
+          fadeAnim.setValue(1);
+          fadingRef.current = false;
+        });
       }
-
-      const end = Math.min(pointerRef.current + CHARS_PER_TICK, src.length);
-      for (let i = pointerRef.current; i < end; i++) {
-        const ch = src[i];
-        if (ch === '\n') {
-          linesRef.current.push(currentLineRef.current);
-          currentLineRef.current = '';
-        } else {
-          currentLineRef.current += ch;
-          if (currentLineRef.current.length >= LINE_WIDTH) {
-            linesRef.current.push(currentLineRef.current);
-            currentLineRef.current = '';
-          }
-        }
-      }
-      pointerRef.current = end;
-
-      const all = currentLineRef.current
-        ? [...linesRef.current, currentLineRef.current]
-        : [...linesRef.current];
-      const visible = all.slice(-MAX_LINES);
-      setLines(visible);
-    }, TICK);
+    }, 55);
 
     return () => clearInterval(interval);
   }, []);
 
-  if (!lines.length) return null;
+  if (!line) return null;
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <Text style={[styles.text, { color: colors.GOLD }]}>
-        {lines.join('\n')}
-        <Text style={styles.cursor}>▎</Text>
+        {line}
+        <Text style={[styles.cursor, { color: colors.GOLD }]}>▎</Text>
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { marginTop: 24, paddingHorizontal: 16, alignItems: 'center', height: 130 },
-  text: { fontSize: 15, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', lineHeight: 24, textAlign: 'center' },
-  cursor: { opacity: 0.4 },
+  container: { marginTop: 24, paddingHorizontal: 16, alignItems: 'center' },
+  text: { fontSize: 16, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', lineHeight: 24, textAlign: 'center' },
+  cursor: { opacity: 0.5 },
 });
