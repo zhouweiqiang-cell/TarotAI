@@ -3,13 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const SETTINGS_KEY = 'tarotai_settings';
 
 const DEFAULT_SETTINGS = {
-  model: 'gemini-2.0-flash',
+  model: 'gemini-3.1-flash-lite-preview',
   language: 'zh',
   style: 'mystical', // 'mystical' | 'psychological' | 'practical'
 };
 
 const VALID_MODELS = new Set([
-  'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite',
+  'gemini-3.1-pro-preview', 'gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-3.1-flash-lite-preview',
+  'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-2.0-flash-lite',
   'qwen-vl-max', 'glm-4v-flash',
 ]);
 
