@@ -18,7 +18,7 @@ async function transcribeAudio(base64, mimeType) {
       parts: [{ inline_data: { mime_type: mimeType, data: base64 } }],
     }],
   };
-  const res = await fetch(`${WORKER_URL}?model=gemini-1.5-flash&stream=false`, {
+  const res = await fetch(`${WORKER_URL}?model=gemini-2.0-flash&stream=false`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
