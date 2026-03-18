@@ -55,8 +55,8 @@ export default function App() {
   const colors = useMemo(() => getColors(theme), [theme]);
 
   const styles = useMemo(() => StyleSheet.create({
-    root: { flex: 1, backgroundColor: colors.BG_DEEP },
-    screenContainer: { flex: 1 },
+    root: { flex: 1, backgroundColor: colors.BG_DEEP, position: 'relative' },
+    screenContainer: { flex: 1, backgroundColor: 'transparent' },
     tabBar: {
       flexDirection: 'row', backgroundColor: colors.BG_CARD,
       borderTopWidth: 1, borderTopColor: colors.BORDER,
