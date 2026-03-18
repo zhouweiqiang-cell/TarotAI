@@ -108,7 +108,7 @@ async function transcribeAudio(base64, mimeType) {
   return data.candidates?.[0]?.content?.parts?.find(p => p.text && !p.thought)?.text || '';
 }
 
-export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', animStyle = 'matrix', onNavigate }) {
+export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', onNavigate }) {
   const t = getTexts(lang);
   const colors = useMemo(() => getColors(theme), [theme]);
   const ds = useMemo(() => cs(colors), [theme]);
@@ -415,7 +415,7 @@ export default function SpreadScreen({ lang = 'zh', theme = 'cosmic', animStyle 
   // ─── Step: Reading Result ───
   return (
     <SafeAreaView style={ds.safe}>
-      {loading && (animStyle === 'matrix'
+      {loading && (theme === 'dune'
         ? <MatrixRain streamingText={streamingText} colors={colors} />
         : <NebulaBackground />
       )}

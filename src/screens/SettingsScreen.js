@@ -33,18 +33,12 @@ const THEME_OPTIONS = [
   { id: 'dune',   textKey: 'themeDune',   descKey: 'themeDuneDesc' },
 ];
 
-const ANIM_OPTIONS = [
-  { id: 'nebula', textKey: 'animNebula', descKey: 'animNebulaDesc' },
-  { id: 'matrix', textKey: 'animMatrix', descKey: 'animMatrixDesc' },
-];
-
 export default function SettingsScreen({ lang: propLang = 'zh', theme = 'cosmic', onLangChange }) {
   const [selectedModel, setSelectedModel] = useState('gemini-3.1-flash-lite-preview');
   const [selectedLang, setSelectedLang] = useState(propLang);
   const [selectedStyle, setSelectedStyle] = useState('mystical');
   const [selectedTone, setSelectedTone] = useState('friendly');
   const [selectedTheme, setSelectedTheme] = useState(theme);
-  const [selectedAnim, setSelectedAnim] = useState('matrix');
   const [openSection, setOpenSection] = useState(null);
   const t = getTexts(selectedLang);
   const colors = useMemo(() => getColors(selectedTheme), [selectedTheme]);
@@ -56,8 +50,7 @@ export default function SettingsScreen({ lang: propLang = 'zh', theme = 'cosmic'
       setSelectedLang(s.language);
       setSelectedStyle(s.style || 'mystical');
       setSelectedTone(s.tone || 'friendly');
-      setSelectedTheme(s.visualTheme || 'cosmic');
-      setSelectedAnim(s.animStyle || 'matrix');
+      setSelectedTheme(s.visualTheme || 'dune');
     })();
   }, [propLang]);
 
@@ -75,7 +68,6 @@ export default function SettingsScreen({ lang: propLang = 'zh', theme = 'cosmic'
   const selectStyle = async (id) => { setSelectedStyle(id); await saveSettings({ style: id }); };
   const selectTone  = async (id) => { setSelectedTone(id);  await saveSettings({ tone: id }); };
   const selectTheme = async (id) => { setSelectedTheme(id); await saveSettings({ visualTheme: id }); onLangChange?.(); };
-  const selectAnim  = async (id) => { setSelectedAnim(id);  await saveSettings({ animStyle: id }); onLangChange?.(); };
 
   const toggleSection = useCallback((section) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -145,7 +137,6 @@ export default function SettingsScreen({ lang: propLang = 'zh', theme = 'cosmic'
   }
 
   const themeSel = THEME_OPTIONS.find(o => o.id === selectedTheme);
-  const animSel = ANIM_OPTIONS.find(o => o.id === selectedAnim);
   const langSel = LANGUAGE_OPTIONS.find(o => o.id === selectedLang);
   const styleSel = STYLE_OPTIONS.find(o => o.id === selectedStyle);
   const toneSel = TONE_OPTIONS.find(o => o.id === selectedTone);
@@ -166,21 +157,6 @@ export default function SettingsScreen({ lang: propLang = 'zh', theme = 'cosmic'
                 key={opt.id} name={t[opt.textKey]} desc={t[opt.descKey]}
                 selected={selectedTheme === opt.id} isFirst={i === 0}
                 onPress={() => { selectTheme(opt.id); toggleSection('theme'); }}
-              />
-            ))}
-          </Dropdown>
-        </View>
-
-        {/* Animation Style */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t.animSection}</Text>
-          <Text style={styles.sectionDesc}>{t.animDesc}</Text>
-          <Dropdown sectionId="anim" selectedLabel={animSel ? t[animSel.textKey] : ''}>
-            {ANIM_OPTIONS.map((opt, i) => (
-              <OptionRow
-                key={opt.id} name={t[opt.textKey]} desc={t[opt.descKey]}
-                selected={selectedAnim === opt.id} isFirst={i === 0}
-                onPress={() => { selectAnim(opt.id); toggleSection('anim'); }}
               />
             ))}
           </Dropdown>

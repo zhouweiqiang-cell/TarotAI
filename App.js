@@ -31,8 +31,7 @@ const TABS = [
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [lang, setLang] = useState('zh');
-  const [theme, setTheme] = useState('cosmic');
-  const [animStyle, setAnimStyle] = useState('matrix');
+  const [theme, setTheme] = useState('dune');
   const [t, setT] = useState(getTexts('zh'));
 
   // Reading flow state — passed from SpreadScreen → HomeScreen-like reading view
@@ -41,8 +40,7 @@ export default function App() {
   const refreshSettings = useCallback(async () => {
     const settings = await getSettings();
     setLang(settings.language);
-    setTheme(settings.visualTheme || 'cosmic');
-    setAnimStyle(settings.animStyle || 'matrix');
+    setTheme(settings.visualTheme || 'dune');
     setT(getTexts(settings.language));
   }, []);
 
@@ -84,7 +82,7 @@ export default function App() {
           <HomeScreen lang={lang} theme={theme} onNavigate={switchTab} />
         )}
         {activeTab === 'spread' && (
-          <SpreadScreen lang={lang} theme={theme} animStyle={animStyle} onNavigate={switchTab} />
+          <SpreadScreen lang={lang} theme={theme} onNavigate={switchTab} />
         )}
         {activeTab === 'cards' && (
           <CardsScreen lang={lang} theme={theme} />

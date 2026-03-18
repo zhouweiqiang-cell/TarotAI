@@ -7,8 +7,7 @@ const DEFAULT_SETTINGS = {
   language: 'zh',
   style: 'mystical', // 'mystical' | 'psychological' | 'practical'
   tone: 'friendly',  // 'formal' | 'friendly' | 'humorous' | 'blunt' | 'gentle'
-  visualTheme: 'cosmic', // 'cosmic' | 'dune'
-  animStyle: 'matrix',  // 'nebula' | 'matrix'
+  visualTheme: 'dune', // 'cosmic' | 'dune'
 };
 
 const VALID_MODELS = new Set([
